@@ -30,6 +30,6 @@ RUN apk add --upgrade --no-cache apk-tools \
     && rm -rf *.txt
 USER nobody:nobody
 COPY gitInfo.txt /
-ADD catalog_update.py /
+ADD *.py /
 ENTRYPOINT [ "/catalog_update.py" ]
 
