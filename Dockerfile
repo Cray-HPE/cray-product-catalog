@@ -28,6 +28,6 @@ RUN apk update \
         python3-dev \
         libc-dev \
     && pip3 install --no-cache-dir -r requirements.txt
-ADD catalog_update.py /
+ADD *.py /
 
 ENTRYPOINT [ "/catalog_update.py" ]
