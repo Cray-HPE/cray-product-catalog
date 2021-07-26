@@ -153,8 +153,7 @@ def update_config_map(data, name, namespace):
             LOGGER.exception("Error calling patch_namespaced_config_map")
 
 
-if __name__ == "__main__":
-
+def main():
     LOGGER.info(
         "Updating config_map=%s in namespace=%s for product/version=%s/%s",
         CONFIG_MAP, CONFIG_MAP_NAMESPACE, PRODUCT, PRODUCT_VERSION
@@ -163,3 +162,7 @@ if __name__ == "__main__":
     load_k8s()
     data = read_yaml_content(YAML_CONTENT)
     update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+
+
+if __name__ == "__main__":
+    main()

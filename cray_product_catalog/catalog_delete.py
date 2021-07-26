@@ -168,8 +168,7 @@ def modify_config_map(name, namespace, product, product_version, key=None):
             LOGGER.exception("Error calling patch_namespaced_config_map")
 
 
-if __name__ == "__main__":
-
+def main():
     # Parameters to identify config map and product/version to remove
     PRODUCT = os.environ.get("PRODUCT").strip()  # required
     PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
@@ -184,3 +183,7 @@ if __name__ == "__main__":
     )
     load_k8s()
     modify_config_map(*args)
+
+
+if __name__ == "__main__":
+    main()

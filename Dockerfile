@@ -21,15 +21,32 @@
 # (MIT License)
 FROM artifactory.algol60.net/docker.io/alpine:3.13 as base
 RUN apk add --no-cache py3-pip python3
-COPY *.txt /
-RUN apk add --upgrade --no-cache apk-tools \
-	&& apk update \
-    && apk add --update --no-cache gcc python3-dev libc-dev \
-	&& apk -U upgrade --no-cache \
-    && pip3 install --no-cache-dir -r requirements.txt \
-    && rm -rf *.txt
-USER nobody:nobody
-COPY gitInfo.txt /
-ADD *.py /
-ENTRYPOINT [ "/catalog_update.py" ]
 
+WORKDIR /src/
+COPY cray_product_catalog/ ./cray_product_catalog
+COPY setup.py requirements.txt \
+    constraints.txt .version README.md ./
+
+RUN apk add --upgrade --no-cache apk-tools \
+    && apk update \
+    && apk add --update --no-cache \
+        gcc \
+        python3-dev \
+        libc-dev \
+    && apk -U upgrade --no-cache \
+    && pip3 install --no-cache-dir -r requirements.txt \
+    && python3 setup.py install \
+    && rm -rf /src/
+
+# Must make catalog_update available as /catalog_update.py
+# because it is currently specified this way in the cray-import-config helm
+# chart. This is not easy to do with setuptools directly, so just link it
+# here.
+# https://github.com/Cray-HPE/cray-product-install-charts/blob/master/charts/cray-import-config/templates/job.yaml#L50
+RUN ln -s /usr/bin/catalog_update /catalog_update.py
+
+WORKDIR /
+COPY gitInfo.txt /
+USER nobody:nobody
+
+ENTRYPOINT [ "/usr/bin/catalog_update" ]
