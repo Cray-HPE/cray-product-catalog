@@ -113,7 +113,7 @@ def update_config_map(data, name, namespace):
 
             # Config map doesn't exist yet
             if e.status == 404:
-                LOGGER.warning("ConfigMap %r doesn't exist, attempting again.")
+                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
                 continue
             else:
                 raise  # unrecoverable
