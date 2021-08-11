@@ -23,11 +23,11 @@ FROM artifactory.algol60.net/docker.io/alpine:3
 RUN apk add --no-cache py3-pip python3
 COPY *.txt /
 RUN apk update \
-    && apk add --update --no-cache \
-        gcc \
-        python3-dev \
-        libc-dev \
-    && pip3 install --no-cache-dir -r requirements.txt
+    && apk add --update --no-cache gcc python3-dev libc-dev \
+    && pip3 install --no-cache-dir -r requirements.txt \
+    && rm -rf *.txt
+RUN adduser -g "Cray Product Catalog Update User" --no-create-home --disabled-password appuser
+USER appuser
 ADD catalog_update.py /
-
 ENTRYPOINT [ "/catalog_update.py" ]
+
