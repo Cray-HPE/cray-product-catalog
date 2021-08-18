@@ -62,11 +62,12 @@ PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 YAML_CONTENT = os.environ.get("YAML_CONTENT").strip()  # required
+SKIP_SET_ACTIVE_VERSION = bool(os.environ.get("SKIP_SET_ACTIVE_VERSION"))
 VALIDATE_SCHEMA = bool(os.environ.get("VALIDATE_SCHEMA"))
 
 
 def load_k8s():
-    """ Load Kuberenetes Configuration """
+    """ Load Kubernetes Configuration """
     try:
         config.load_incluster_config()
     except Exception:
@@ -90,6 +91,23 @@ def read_yaml_content(yaml_file):
     LOGGER.info("Retrieving content from %s", yaml_file)
     with open(yaml_file) as yfile:
         return yaml.safe_load(yfile)
+
+
+def set_active_version(product_data):
+    """ Modify product_data in place to set the 'active' key for PRODUCT_VERSION.
+
+    This also sets the 'active' key for other versions in product_data to False."""
+    # Set the current version to 'active'
+    for version in product_data:
+        product_data[version]['active'] = version == PRODUCT_VERSION
+
+
+def current_version_is_active(product_data):
+    """ Return True if PRODUCT_VERSION is active and no other version of the product is active."""
+    current_version = product_data[PRODUCT_VERSION]
+    other_versions = [version for version in product_data if version != PRODUCT_VERSION]
+
+    return current_version.get('active') and not any([product_data[version].get('active') for version in other_versions])
 
 
 def update_config_map(data, name, namespace):
@@ -139,7 +157,6 @@ def update_config_map(data, name, namespace):
         if PRODUCT not in config_map_data:
             LOGGER.info("Product=%s does not exist; will update", PRODUCT)
             config_map_data[PRODUCT] = product_data = {PRODUCT_VERSION: {}}
-            pass
         # Product exists in ConfigMap
         else:
             product_data = yaml.safe_load(config_map_data[PRODUCT])
@@ -148,21 +165,23 @@ def update_config_map(data, name, namespace):
                     "Version=%s does not exist; will update", PRODUCT_VERSION
                 )
                 product_data[PRODUCT_VERSION] = {}
-                pass
             # Key with same version exists in ConfigMap
             else:
-                if data.items() <= product_data[PRODUCT_VERSION].items():
+                if (data.items() <= product_data[PRODUCT_VERSION].items()
+                        and (current_version_is_active(product_data) or SKIP_SET_ACTIVE_VERSION)):
                     LOGGER.info("ConfigMap data updates exist; Exiting.")
                     break
 
         # Patch the config map if needed
         product_data[PRODUCT_VERSION].update(data)
+        if not SKIP_SET_ACTIVE_VERSION:
+            set_active_version(product_data)
         config_map_data[PRODUCT] = yaml.safe_dump(
             product_data, default_flow_style=False
         )
         LOGGER.info("ConfigMap update attempt=%s", attempt)
         try:
-            response = api_instance.patch_namespaced_config_map(
+            api_instance.patch_namespaced_config_map(
                 name, namespace, client.V1ConfigMap(data=config_map_data)
             )
         except ApiException:
@@ -174,6 +193,12 @@ def main():
         "Updating config_map=%s in namespace=%s for product/version=%s/%s",
         CONFIG_MAP, CONFIG_MAP_NAMESPACE, PRODUCT, PRODUCT_VERSION
     )
+
+    if SKIP_SET_ACTIVE_VERSION:
+        LOGGER.info(
+            "Not setting %s:%s to active because SKIP_SET_ACTIVE_VERSION was set.",
+            PRODUCT, PRODUCT_VERSION
+        )
 
     load_k8s()
     data = read_yaml_content(YAML_CONTENT)
