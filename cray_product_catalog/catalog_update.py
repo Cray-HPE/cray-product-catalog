@@ -38,11 +38,14 @@ import time
 import urllib3
 from urllib3.util.retry import Retry
 
+from jsonschema.exceptions import ValidationError
 from kubernetes import client, config
 from kubernetes.client.api_client import ApiClient
 from kubernetes.client.configuration import Configuration
 from kubernetes.client.rest import ApiException
 import yaml
+
+from cray_product_catalog.schema.validate import validate
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -59,6 +62,7 @@ PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 YAML_CONTENT = os.environ.get("YAML_CONTENT").strip()  # required
+VALIDATE_SCHEMA = bool(os.environ.get("VALIDATE_SCHEMA"))
 
 
 def load_k8s():
@@ -67,6 +71,18 @@ def load_k8s():
         config.load_incluster_config()
     except Exception:
         config.load_kube_config()
+
+
+def validate_schema(data):
+    """ Validate data against the schema. """
+    LOGGER.info(
+        "Validating data against schema because VALIDATE_SCHEMA was set."
+    )
+    try:
+        validate(data)
+    except ValidationError as err:
+        LOGGER.error("Data failed schema validation: %s", err)
+        raise SystemExit(1)
 
 
 def read_yaml_content(yaml_file):
@@ -161,6 +177,9 @@ def main():
 
     load_k8s()
     data = read_yaml_content(YAML_CONTENT)
+    if VALIDATE_SCHEMA:
+        validate_schema(data)
+
     update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
 

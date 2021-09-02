@@ -49,6 +49,9 @@ setup(
     author='Hewlett Packard Enterprise Development LP',
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),
+    package_data={
+        'cray_product_catalog.schema': ['schema.yaml']
+    },
     python_requires='>=3, <4',
     # Top-level dependencies are parsed from requirements.txt
     install_requires=install_requires,
