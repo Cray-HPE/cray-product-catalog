@@ -1,0 +1,157 @@
+# Copyright 2021 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+# Schema for data in product catalog
+#
+# TODO: Update JSON Schema version from draft-07 version
+# draft-07 is the latest format supported by the Python jsonschema library.
+$schema: "http://json-schema.org/draft-07/schema#"
+title: Cray Product Catalog
+description: >
+  A schema that describes the structure of product catalog config map data
+  for a particular product version.
+type: object
+additionalProperties: false
+minItems: 1
+properties:
+  active:
+    description: Specifies if this version is active.
+    type: boolean
+  component_versions:
+    description: >
+      Describes versions of individual components within the overall product version.
+    type: object
+    oneOf:
+      - description: >
+          A basic mapping of component name to version. This format is deprecated.
+        additionalProperties:
+          type: string
+      - description: >
+          A mapping of component types to components of that type provided by a
+          given version of the product.
+        additionalProperties: false
+        properties:
+          docker:
+            $ref: '#/definitions/ComponentVersions'
+          rpm:
+            $ref: '#/definitions/ComponentVersions'
+          helm:
+            $ref: '#/definitions/ComponentVersions'
+          repositories:
+            type: array
+            items:
+              oneOf:
+                - $ref: '#/definitions/GroupRepository'
+                - $ref: '#/definitions/HostedRepository'
+  configuration:
+    description: The data regarding this version's configuration
+    type: object
+    additionalProperties: false
+    properties:
+      clone_url:
+        description: The HTTP URL of the configuration content's git repository.
+        type: string
+      commit:
+        description: The commit hash of the configuration content imported to VCS.
+        type: string
+      import_branch:
+        description: The branch of the configuration content import to VCS.
+        type: string
+      import_date:
+        description: The date and time configuration was imported to VCS.
+        # TODO: date type checking
+        # When parsing dates in YAML, they are converted to a date type. JSON doesn't
+        # have a date type, so there is no way to specify this in jsonschema.
+      ssh_url:
+        description: The SSH URL of the configuration content's git repository.
+        type: string
+  images:
+    description: The images for this version.
+    additionalProperties:
+      $ref: '#/definitions/UUIDComponent'
+  recipes:
+    description: The image recipes for this version.
+    additionalProperties:
+      $ref: '#/definitions/UUIDComponent'
+
+definitions:
+  ComponentVersions:
+    description: >
+      An array of component versions for a type of component delivered by the product.
+    type: array
+    items:
+      required:
+        - name
+        - version
+      description: A component with a name and version.
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: The component name.
+        version:
+          type: string
+          description: The component version.
+  UUIDComponent:
+    description: An object with one key, 'id' whose value is a UUID.
+    type: object
+    properties:
+      id:
+        type: string
+        description: The component's ID.
+  HostedRepository:
+    description: A hosted-type package repository.
+    type: object
+    additionalProperties: false
+    required:
+      - name
+      - type
+    properties:
+      name:
+        description: The name of the package repository.
+        type: string
+      type:
+        description: The type of the repository.
+        type: string
+        enum:
+          - hosted
+  GroupRepository:
+    description: A group-type package repository.
+    type: object
+    additionalProperties: false
+    required:
+      - name
+      - members
+      - type
+    properties:
+      name:
+        description: The name of the package repository.
+        type: string
+      members:
+        type: array
+        items:
+          description: A hosted-type package repository.
+          type: string
+      type:
+        description: The type of repository
+        type: string
+        enum:
+          - group
