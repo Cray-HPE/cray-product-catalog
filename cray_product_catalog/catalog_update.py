@@ -107,7 +107,9 @@ def current_version_is_active(product_data):
     current_version = product_data[PRODUCT_VERSION]
     other_versions = [version for version in product_data if version != PRODUCT_VERSION]
 
-    return current_version.get('active') and not any([product_data[version].get('active') for version in other_versions])
+    return current_version.get('active') and not any(
+               [product_data[version].get('active') for version in other_versions]
+           )
 
 
 def update_config_map(data, name, namespace):
