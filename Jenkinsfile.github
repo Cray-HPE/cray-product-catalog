@@ -3,7 +3,10 @@
 
 pipeline {
     agent {
-        label "metal-gcp-builder"
+        docker {
+            label "metal-gcp-builder"
+            image "arti.dev.cray.com/dstbuildenv-docker-master-local/cray-sle15sp3_build_environment:latest"
+        }
     }
 
     options {
@@ -13,8 +16,9 @@ pipeline {
 
     environment {
         NAME = "cray-product-catalog"
-        APP_NAME = "cray-product-catalog-update"
+        PYMOD_NAME = "cray-product-catalog"
         DESCRIPTION = "Update a product catalog with product/version artifacts."
+        APP_NAME = "cray-product-catalog-update"
         IS_STABLE = getBuildIsStable()
     }
 
@@ -69,6 +73,15 @@ pipeline {
                         sh "make chart"
                     }
                 }
+
+                stage('Python Package'){
+                    steps {
+                        sh "make pymod_prepare"
+                        sh "make pymod_build"
+                        sh "make pymod_test"
+                    }
+                }
+
             }
         }
 
@@ -80,7 +93,7 @@ pipeline {
             steps {
                 publishCsmDockerImage(image: env.APP_NAME, tag: env.DOCKER_VERSION, isStable: env.IS_STABLE)
                 publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
-
+                publishCsmPythonModules(module: env.PYMOD_NAME, isStable: env.IS_STABLE)
             }
         }
     }
