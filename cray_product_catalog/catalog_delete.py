@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+# Copyright 2021 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,16 +20,23 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 # (MIT License)
-
-# This script takes a PRODUCT and PRODUCT_VERSION and applies the content of
-# a YAML file to a Kubernetes ConfigMap as follows:
+#
+# This script takes a PRODUCT and PRODUCT_VERSION and deletes the content
+# in a Kubernetes ConfigMap in one of two ways:
+#
+# If a 'key' is specified within a PRODUCT/PRODUCT_VERSION:
 #
 # {PRODUCT}:
 #   {PRODUCT_VERSION}:
-#     {content of yaml file}
+#     {key}        # <- content to delete
+#
+# If a 'key' is not specified:
+#
+# {PRODUCT}:
+#   {PRODUCT_VERSION}: # <- delete entire version
 #
 # Since updates to a configmap are not atomic, this script will continue to
-# attempt to update the config map until it has been patched successfully.
+# attempt to modify the config map until it has been patched successfully.
 import logging
 import os
 import random
@@ -53,37 +60,26 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 LOGGER.addHandler(handler)
 
-# Parameters to identify config map and content in it to update
-PRODUCT = os.environ.get("PRODUCT").strip()  # required
-PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
-CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
-CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
-YAML_CONTENT = os.environ.get("YAML_CONTENT").strip()  # required
-
 
 def load_k8s():
-    """ Load Kuberenetes Configuration """
+    """ Load Kubernetes Configuration """
     try:
         config.load_incluster_config()
     except Exception:
         config.load_kube_config()
 
 
-def read_yaml_content(yaml_file):
-    """ Read and return the raw content contained in the `yaml_file`. """
-    LOGGER.info("Retrieving content from %s", yaml_file)
-    with open(yaml_file) as yfile:
-        return yaml.safe_load(yfile)
+def modify_config_map(name, namespace, product, product_version, key=None):
+    """Remove a product version from the catalog config map.
 
-
-def update_config_map(data, name, namespace):
-    """
-    Get the config map `data` to be added.
+    If a key is specified, delete the `key` content from a specific section
+    of the catalog config map. If there are no more keys after it has been
+    removed, remove the version mapping as well.
 
     1. Wait for the config map to be present in the namespace
     2. Patch the config_map
     3. Read back the config_map
-    4. Repeat steps 2-3 if config_map does not include the changes requested
+    4. Repeat steps 2-3 if config_map does not reflect the changes requested
     """
     k8sclient = ApiClient(configuration=Configuration())
     retries = 100
@@ -94,6 +90,7 @@ def update_config_map(data, name, namespace):
     k8sclient.rest_client.pool_manager.connection_pool_kw['retries'] = retry
     api_instance = client.CoreV1Api(k8sclient)
     attempt = 0
+    max_attempts = 100
 
     while True:
 
@@ -112,54 +109,81 @@ def update_config_map(data, name, namespace):
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # Config map doesn't exist yet
-            if e.status == 404:
-                LOGGER.warning("ConfigMap %r doesn't exist, attempting again.")
+            if e.status == 404 and attempt < max_attempts:
+                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
                 continue
             else:
                 raise  # unrecoverable
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no config map data exists
-        if PRODUCT not in config_map_data:
-            LOGGER.info("Product=%s does not exist; will update", PRODUCT)
-            config_map_data[PRODUCT] = product_data = {PRODUCT_VERSION: {}}
-            pass
-        # Product exists in ConfigMap
-        else:
-            product_data = yaml.safe_load(config_map_data[PRODUCT])
-            if PRODUCT_VERSION not in product_data:
-                LOGGER.info(
-                    "Version=%s does not exist; will update", PRODUCT_VERSION
-                )
-                product_data[PRODUCT_VERSION] = {}
-                pass
-            # Key with same version exists in ConfigMap
-            else:
-                if data.items() <= product_data[PRODUCT_VERSION].items():
-                    LOGGER.info("ConfigMap data updates exist; Exiting.")
-                    break
+        if product not in config_map_data:
+            break  # product doesn't exist, don't need to remove anything
 
-        # Patch the config map if needed
-        product_data[PRODUCT_VERSION].update(data)
-        config_map_data[PRODUCT] = yaml.safe_dump(
+        # Product exists in ConfigMap
+        product_data = yaml.safe_load(config_map_data[product])
+        if product_version not in product_data:
+            LOGGER.info(
+                "Version %s not in ConfigMap", product_version
+            )
+            break  # product version is gone, we are done
+
+        # Product version exists in ConfigMap
+        if key:
+            # Key exists, remove it
+            if key in product_data[product_version]:
+                LOGGER.info(
+                    "key=%s in version=%s exists; to be removed",
+                    key, product_version
+                )
+                product_data[product_version].pop(key)
+            else:
+                # No keys left
+                if not product_data[product_version].keys():
+                    LOGGER.info(
+                        "No keys remain in version=%s; removing version",
+                        product_version
+                    )
+                    product_data.pop(product_version)
+                else:
+                    break  # key is gone, we are done
+        else:
+            LOGGER.info(
+                "Removing product=%s, version=%s",
+                product, product_version
+            )
+            product_data.pop(product_version)
+
+        # Patch the config map
+        config_map_data[product] = yaml.safe_dump(
             product_data, default_flow_style=False
         )
         LOGGER.info("ConfigMap update attempt=%s", attempt)
         try:
-            response = api_instance.patch_namespaced_config_map(
+            api_instance.patch_namespaced_config_map(
                 name, namespace, client.V1ConfigMap(data=config_map_data)
             )
+            LOGGER.info("ConfigMap update attempt %s successful", attempt)
         except ApiException:
             LOGGER.exception("Error calling patch_namespaced_config_map")
 
 
-if __name__ == "__main__":
+def main():
+    # Parameters to identify config map and product/version to remove
+    PRODUCT = os.environ.get("PRODUCT").strip()  # required
+    PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
+    CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+    CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
+    KEY = os.environ.get("KEY", "").strip() or None
 
+    args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY)
     LOGGER.info(
-        "Updating config_map=%s in namespace=%s for product/version=%s/%s",
-        CONFIG_MAP, CONFIG_MAP_NAMESPACE, PRODUCT, PRODUCT_VERSION
+        "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
+        *args
     )
-
     load_k8s()
-    data = read_yaml_content(YAML_CONTENT)
-    update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    modify_config_map(*args)
+
+
+if __name__ == "__main__":
+    main()
