@@ -16,11 +16,19 @@ spec:
       restartPolicy: Never
       containers:
       - name: create-catalog-configmap
-        image: "{{ .Values.kubectl.image.registry }}/{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}"
+        image: "{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}"
         command: ["/bin/sh"]
         args:
         - -c
         - "kubectl get cm -n services cpc-backup -o yaml --export | sed 's/^\\s*name: cpc-backup/  name: cray-product-catalog/' | kubectl apply -f - && kubectl delete cm -n services cpc-backup"
+
+kubectl:
+  image:
+    repository: artifactory.algol60.net/csm-docker/stable/docker-kubectl
+    tag: 1.19.15
+    pullPolicy: IfNotPresent
+
+
 ---
 apiVersion: batch/v1
 kind: Job
@@ -39,8 +47,9 @@ spec:
       restartPolicy: Never
       containers:
       - name: create-catalog-configmap
-        image: "{{ .Values.kubectl.image.registry }}/{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}"
+        image: "{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}"
         command: ["/bin/sh"]
         args:
         - -c
         - "kubectl get cm -n services cray-product-catalog -o yaml --export | sed 's/^\\s*name: cray-product-catalog/  name: cpc-backup/' | kubectl apply -f -"
+
