@@ -26,6 +26,20 @@ pipeline {
             steps {
                 // This function is defined in cms-meta-tools:vars/cloneCMSMetaTools.groovy
                 cloneCMSMetaTools()
+                sh 'printenv'
+            }
+        }
+
+        stage("Run gitversion") {
+            agent {
+                docker {
+                    image 'gittools/gitversion:latest'
+                    args "-v $WORKSPACE:/repo --entrypoint=''"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh "/tools/dotnet-gitversion /repo -output buildserver -url ${GIT_URL} -b ${GIT_BRANCH}"
             }
         }
 

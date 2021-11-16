@@ -3,44 +3,72 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
-      - develop
-      - release/**
-  workflow_dispatch:
+      - feature/**
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - develop
+  #     - release/**
 
 jobs:
-  build:
+  build-docker-image:
     runs-on: self-hosted
-
-    # env:
-    #   CONTEXT_PATH: docker.io/alpine/git/1.0.15
-    #   DOCKER_REPO: artifactory.algol60.net/csm-docker/stable/docker.io/alpine/git
-    #   DOCKER_TAG: 1.0.15
     steps:
+
+      - name: Clear previous runs
+        run: sudo rm -rf ${GITHUB_WORKSPACE}/.git
+
+      - name: Setup MS repos
+        run: wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && sudo dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
+
+      - name: Install ASP.NET core runtime
+        run: sudo apt-get update; sudo apt-get install -y apt-transport-https && sudo apt-get update && sudo apt-get install -y dotnet-sdk-6.0
+
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Calculate version
-        uses: docker://gittools/gitversion:5.6.6
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
         with:
-          args: '/output buildserver'
+          versionSpec: '5.8.1'
 
-      - name: build-sign-scan
-        uses: Cray-HPE/github-actions/build-sign-scan@main
+      - name: Display GitVersion config
+        uses: gittools/actions/gitversion/execute@v0.9.7
         with:
-          # Only push on main builds
-          # docker_push: ${{ github.ref == 'refs/heads/main' }}
-          docker_push: true
-          context_path: ${{ env.CONTEXT_PATH }}
-          docker_repo: ${{ env.DOCKER_REPO }}
-          docker_tag: ${{ steps.gitversion.outputs.semVer }}
-          artifactory_algol60_token: ${{ secrets.ARTIFACTORY_ALGOL60_TOKEN }}
-          cosign_gcp_project_id: ${{ secrets.COSIGN_GCP_PROJECT_ID }}
-          cosign_gcp_sa_key: ${{ secrets.COSIGN_GCP_SA_KEY }}
-          cosign_key: ${{ secrets.COSIGN_KEY }}
-          snyk_token: ${{ secrets.SNYK_TOKEN }}
-          github_sha: $GITHUB_SHA
+          useConfigFile: true
+          additionalArguments: '/showConfig'
+
+      - name: Run GitVersion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+        env:
+          Git_Branch: ${{ env.GITHUB_REF_NAME }}
+        with:
+          useConfigFile: true
+
+      # - name: Calculate version
+      #   run: docker run --rm -v "$(pwd):/repo" -e Git_Branch=$GITHUB_REF_NAME gittools/gitversion:latest /repo
+
+      # - name: Calculate version
+        # env:
+        #   Git_Branch: ${{ github.ref_name }}
+        # uses: docker://gittools/gitversion:latest
+        # with:
+        #   args: '-output buildserver'
+
+      # - name: build-sign-scan
+      #   uses: Cray-HPE/github-actions/build-sign-scan@main
+      #   with:
+      #     # Only push on main builds
+      #     # docker_push: ${{ github.ref == 'refs/heads/main' }}
+      #     docker_push: true
+      #     context_path: ${{ env.CONTEXT_PATH }}
+      #     docker_repo: ${{ env.DOCKER_REPO }}
+      #     docker_tag: ${{ steps.gitversion.outputs.semVer }}
+      #     artifactory_algol60_token: ${{ secrets.ARTIFACTORY_ALGOL60_TOKEN }}
+      #     cosign_gcp_project_id: ${{ secrets.COSIGN_GCP_PROJECT_ID }}
+      #     cosign_gcp_sa_key: ${{ secrets.COSIGN_GCP_SA_KEY }}
+      #     cosign_key: ${{ secrets.COSIGN_KEY }}
+      #     snyk_token: ${{ secrets.SNYK_TOKEN }}
+      #     github_sha: $GITHUB_SHA
