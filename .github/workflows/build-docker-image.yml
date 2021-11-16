@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+
     # env:
     #   CONTEXT_PATH: docker.io/alpine/git/1.0.15
     #   DOCKER_REPO: artifactory.algol60.net/csm-docker/stable/docker.io/alpine/git
@@ -23,14 +24,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.11
+      - name: Calculate version
+        uses: docker://gittools/gitversion:5.6.6
         with:
-          versionSpec: '5.5.0'
-
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v0.9.11
+          args: '/repo'
 
       - name: build-sign-scan
         uses: Cray-HPE/github-actions/build-sign-scan@main
