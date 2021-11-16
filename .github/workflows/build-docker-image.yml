@@ -27,7 +27,7 @@ jobs:
       - name: Calculate version
         uses: docker://gittools/gitversion:5.6.6
         with:
-          args: '/repo'
+          args: '/output buildserver'
 
       - name: build-sign-scan
         uses: Cray-HPE/github-actions/build-sign-scan@main
