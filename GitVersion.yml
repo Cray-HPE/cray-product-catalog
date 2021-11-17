@@ -1,4 +1,5 @@
-mode: ContinuousDeployment
+#mode: ContinuousDeployment
+mode: Mainline
 branches: {}
 ignore:
   sha: []
