@@ -1,0 +1,67 @@
+name: Get Version
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - feature/**
+      - release/**
+      - hotfix/**
+      - support/**
+
+jobs:
+
+  # Self Hosted Runner
+  get-version:
+    runs-on: windows-latest
+    # runs-on: self-hosted
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+      - name: Setup MS repos
+        if: ${{ runner.os == 'Linux'}}
+        run: wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && sudo dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
+
+      - name: Install ASP.NET core sdk and runtime
+        if: ${{ runner.os == 'Linux'}}
+        run: sudo apt-get update; sudo apt-get install -y apt-transport-https && sudo apt-get update && sudo apt-get install -y dotnet-sdk-6.0
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: '5.8.1'
+
+      # - name: Display GitVersion config
+      #   uses: gittools/actions/gitversion/execute@v0.9.7
+      #   with:
+      #     useConfigFile: true
+      #     additionalArguments: '/showConfig'
+
+      - name: Run GitVersion to compute semantic version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+
+  build-thing:
+    runs-on: self-hosted
+    needs: get-version
+    env:
+      SEMVER: ${{ needs.get-version.outputs.semVer }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: print semver directly
+        run: echo ${{ needs.get-version.outputs.semVer }}
+
+      - name: print semver from env
+        run: |
+          echo SemVer: $SEMVER
+
