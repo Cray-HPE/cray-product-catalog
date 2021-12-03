@@ -1,6 +1,6 @@
 attrs==21.2.0
 cachetools==3.0.0
-certifi==2019.11.28
+certifi==2021.10.8
 chardet==3.0.4
 google-auth==1.6.1
 idna==2.6
