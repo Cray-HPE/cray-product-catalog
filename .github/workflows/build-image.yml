@@ -106,6 +106,7 @@ jobs:
 
   docker-image-signing:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
     needs: build-docker-image
 
     steps:
