@@ -111,7 +111,6 @@ jobs:
 
     steps:
       - name: Install cosign
-        if: ${{ github.event_name != 'pull_request' }}
         uses: sigstore/cosign-installer@main
         with:
           cosign-release: 'v1.0.0'
@@ -131,7 +130,6 @@ jobs:
           password: ${{ secrets.ARTIFACTORY_ALGOL60_TOKEN }}
 
       - name: Sign Image
-        if: ${{ github.event_name != 'pull_request' }}
         run: COSIGN_KEY=$COSIGN_GCP_SA_KEY cosign sign -key $COSIGN_KEY -a GIT_HASH=$GITHUB_SHA $FULL_IMAGE_WITH_TAG
         shell: bash
         env:
@@ -141,6 +139,7 @@ jobs:
 
   docker-image-vulnerability-scan:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
     needs: build-docker-image
 
     steps:
