@@ -125,8 +125,8 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            👋 Hey! Here is your image:\n${FULL_IMAGE_WITH_TAG}
-            👋 Hey! Here is your image:\n${{env.FULL_IMAGE_WITH_TAG}}
+            👋  Hey! Here is your image:
+               ```${{env.FULL_IMAGE_WITH_TAG}}```
           reactions: rocket
 
       - name: Update comment
@@ -135,8 +135,8 @@ jobs:
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           body: |
-            👋 Hey! Here is your image:\n${FULL_IMAGE_WITH_TAG}
-            👋 Hey! Here is your image:\n${{env.FULL_IMAGE_WITH_TAG}}
+            👋  Hey! Here is your image:
+               ```${{env.FULL_IMAGE_WITH_TAG}}```
           reactions: hooray
 
       # - uses: actions/github-script@v5
