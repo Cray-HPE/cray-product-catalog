@@ -116,6 +116,12 @@ jobs:
           script: |
             const { FULL_IMAGE_WITH_TAG } = process.env
             console.log(`Updating PR with ref to built image: ${FULL_IMAGE_WITH_TAG}`)
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 Hey! Here is your image: ```${FULL_IMAGE_WITH_TAG}```'
+            })
 
   docker-image-signing:
     runs-on: ubuntu-latest
