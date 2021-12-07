@@ -104,6 +104,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  update-pr-with-artifacts:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: build-docker-image
+    steps:
+      - uses: actions/github-script@v5
+        env:
+          FULL_IMAGE_WITH_TAG: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
+        with:
+          script: |
+            const { FULL_IMAGE_WITH_TAG } = process.env
+            console.log(`Updating PR with ref to built image: ${FULL_IMAGE_WITH_TAG}`)
+
   docker-image-signing:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
