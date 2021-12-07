@@ -126,7 +126,8 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             👋  Hey! Here is your image:
-               ```${{env.FULL_IMAGE_WITH_TAG}}```
+
+               ${{ env.FULL_IMAGE_WITH_TAG }}
           reactions: rocket
 
       - name: Update comment
@@ -136,8 +137,10 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           body: |
             👋  Hey! Here is your image:
-               ```${{env.FULL_IMAGE_WITH_TAG}}```
+
+               ${{ env.FULL_IMAGE_WITH_TAG }}
           reactions: hooray
+          edit-mode: replace
 
       # - uses: actions/github-script@v5
       #   env:
