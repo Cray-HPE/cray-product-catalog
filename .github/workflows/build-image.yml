@@ -51,6 +51,7 @@ jobs:
     needs: preamble
     outputs:
       fullImageWithShaTag: ${{ steps.buildvars.outputs.full_image_sha_tag }}
+      imageWithShaTag: ${{ steps.buildvars.outputs.image_sha_tag }}
     env:
       REGISTRY: artifactory.algol60.net
       REPO_BASE: csm-docker
@@ -66,6 +67,7 @@ jobs:
         run: |
           echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.REPO_BASE }}/${{ needs.preamble.outputs.stableRepo }}/${{ env.IMAGE_NAME }}" >> $GITHUB_ENV
           echo ::set-output name=full_image_sha_tag::$(echo ${{ env.REGISTRY }}/${{ env.REPO_BASE }}/${{ needs.preamble.outputs.stableRepo }}/${{ env.IMAGE_NAME }}:sha-$GITHUB_SHA)
+          echo ::set-output name=image_sha_tag::$(echo ${{ env.IMAGE_NAME }}:sha-$GITHUB_SHA)
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -117,48 +119,31 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: Here is your image
 
+      - name: Render template
+        id: template
+        uses: chuhlomin/render-template@v1.2
+        with:
+          template: .github/build-image-comment-template.md
+          vars: |
+            fullImageWithShaTag: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
+            imageWithShaTag: ${{ needs.build-docker-image.outputs.imageWithShaTag }}
+
       - name: Create comment
         if: steps.fc.outputs.comment-id == ''
         uses: peter-evans/create-or-update-comment@v1
-        env:
-          FULL_IMAGE_WITH_TAG: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            👋  Hey! Here is your image:
-
-               ${{ env.FULL_IMAGE_WITH_TAG }}
+          body: ${{ steps.template.outputs.result }}
           reactions: rocket
 
       - name: Update comment
         if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v1
-        env:
-          FULL_IMAGE_WITH_TAG: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
-          body: |
-            👋  Hey! Here is your image:
-
-               ${{ env.FULL_IMAGE_WITH_TAG }}
-
-               ```${{ env.FULL_IMAGE_WITH_TAG }}```
-          reactions: hooray
+          body: ${{ steps.template.outputs.result }}
+          reactions: taco
           edit-mode: replace
-
-      # - uses: actions/github-script@v5
-      #   env:
-      #     FULL_IMAGE_WITH_TAG: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
-      #   with:
-      #     script: |
-      #       const { FULL_IMAGE_WITH_TAG } = process.env
-      #       console.log(`Updating PR with ref to built image: ${FULL_IMAGE_WITH_TAG}`)
-      #       github.rest.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: `👋 Hey! Here is your image:\n${FULL_IMAGE_WITH_TAG}`
-      #       })
 
   docker-image-signing:
     runs-on: ubuntu-latest
