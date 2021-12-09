@@ -123,7 +123,7 @@ jobs:
         id: template
         uses: chuhlomin/render-template@v1.2
         with:
-          template: .github/build-image-comment-template.md
+          template: build-image-comment-template.md
           vars: |
             fullImageWithShaTag: ${{ needs.build-docker-image.outputs.fullImageWithShaTag }}
             imageWithShaTag: ${{ needs.build-docker-image.outputs.imageWithShaTag }}
