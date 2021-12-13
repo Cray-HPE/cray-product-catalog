@@ -21,12 +21,12 @@
 # (MIT License)
 FROM artifactory.algol60.net/docker.io/alpine:3.13 as base
 RUN apk add --no-cache py3-pip python3
-ARG VERSION=0.0.0
+ARG PYMOD_VERSION=0.0.0
 
 WORKDIR /src/
 COPY cray_product_catalog/ ./cray_product_catalog
 COPY setup.py requirements.txt constraints.txt README.md ./
-RUN echo ${VERSION} >> .version
+RUN echo ${PYMOD_VERSION} > .version
 
 RUN apk add --upgrade --no-cache apk-tools \
     && apk update \

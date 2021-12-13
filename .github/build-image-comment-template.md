@@ -1,4 +1,4 @@
-👋  Hey! Here is the image we built for you ([Artifactory Link](https://artifactory.algol60.net/ui/repos/tree/General/csm-docker%2F{{ .stableRepo }}%2F{{ .imageName }}%2F{{ .imageTag }})):
+👋  Hey! Here is the image we built for you ([Artifactory Link](https://artifactory.algol60.net/ui/repos/tree/General/csm-docker%2F{{ .isStable }}%2F{{ .imageName }}%2F{{ .imageTag }})):
 
 ```bash
 {{ .imageDownloadLink }}
@@ -19,11 +19,10 @@ Or, use this script to pull the image from the build server to a dev system:
 ```
 #!/usr/bin/env bash
 
-export REMOTE_IMAGE={{ .fullImageWithShaTag }}
-export LOCAL_IMAGE={{ .imageWithShaTag }}
-export SLES_SP=SP2
+export REMOTE_IMAGE={{ .fullImage }}
+export LOCAL_IMAGE={{ .imageName }}:{{ .imageTag }}
 
-zypper addrepo https://slemaster.us.cray.com/SUSE/Products/SLE-Module-Server-Applications/15-${SLES_SP}/x86_64/product {{ .zypperRepoName }}
+zypper addrepo https://slemaster.us.cray.com/SUSE/Products/SLE-Module-Server-Applications/15-SP2/x86_64/product {{ .zypperRepoName }}
 zypper refresh
 zypper in -y --repo {{ .zypperRepoName }} skopeo
 skopeo copy --dest-tls-verify=false docker://${REMOTE_IMAGE} docker://registry.local/cray/${LOCAL_IMAGE}
@@ -31,4 +30,7 @@ zypper rr {{ .zypperRepoName }}
 ```
 </details>
 
-*Note*: this SHA is the merge of {{ .PRHeadSha }} and the PR base branch. Good luck and make rocket go now! 🌮 🚀
+*Note*: this SHA is the merge of {{ .PRHeadSha }} and the PR base branch. Make rocket go now! 🌮 🚀
+
+<!-- This is text used to uniquely find this comment for updating purposes -->
+<!-- csm-pr-comment-template -->

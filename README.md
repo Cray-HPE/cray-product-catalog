@@ -125,10 +125,9 @@ This repo uses gitflow. CMS-core-product-support team make a branch. Others, mak
 * Docker
 * Good intentions
 
-## Blamelog
+## Changelog
 
-* _0.1.0_ - initial release for Shasta 1.4, addition to CSM product stream - David Laine (david.laine@hpe.com)
-* _0.0.1_ - initial implementation - Randy Kleinman (randy.kleinman@hpe.com)
+See the [CHANGELOG](CHANGELOG.md) for changes.
 
 ## Copyright and License
 This project is copyrighted by Hewlett Packard Enterprise Development LP and is under the MIT
