@@ -104,23 +104,17 @@ All configuration options are provided as environment variables.
 
  > The Kubernetes namespace of the `CONFIG_MAP`.
 
-## Build Helpers
-This repo uses some build helpers from the 
-[cms-meta-tools](https://github.com/Cray-HPE/cms-meta-tools) repo. See that repo for more details.
-
-## Local Builds
-
-TBD
-
-
 ## Versioning
 
 Versions are calculated automatically using `gitversion`. The full SemVer
 output is governed by the `GitVersion.yml` file in the root of this repo.
 
+Run `gitversion -output json` to see the current version based on the checked
+out commit.
+
 ## Contributing
 
-CMS folks, make a branch. Others, make a fork.
+This repo uses gitflow. CMS-core-product-support team make a branch. Others, make a fork.
 
 ## Built With
 
@@ -131,10 +125,9 @@ CMS folks, make a branch. Others, make a fork.
 * Docker
 * Good intentions
 
-## Blamelog
+## Changelog
 
-* _0.1.0_ - initial release for Shasta 1.4, addition to CSM product stream - David Laine (david.laine@hpe.com)
-* _0.0.1_ - initial implementation - Randy Kleinman (randy.kleinman@hpe.com)
+See the [CHANGELOG](CHANGELOG.md) for changes.
 
 ## Copyright and License
 This project is copyrighted by Hewlett Packard Enterprise Development LP and is under the MIT

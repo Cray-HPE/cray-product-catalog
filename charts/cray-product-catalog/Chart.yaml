@@ -1,20 +1,21 @@
 apiVersion: v2
 name: cray-product-catalog
-version: 0.0.0
+version: 0.0.0-DEV  # Replaced during build
 description: Catalog of Cray EX add-on Products
 keywords:
-- cray
-- shasta
+  - cray
+  - shasta
 sources:
-- https://github.com/Cray-HPE/cray-product-catalog
+  - https://github.com/Cray-HPE/cray-product-catalog
 maintainers:
-- email: randy.kleinman@hpe.com
-  name: rkleinman-hpe
-appVersion: 0.0.0
+  - email: randy.kleinman@hpe.com
+    name: rkleinman-hpe
+appVersion: 0.0.0-DEV  # Replaced during build
 annotations:
+  # image reference replaced during build
   artifacthub.io/images: |
     - name: cray-product-catalog-update
-      image: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update:0.0.0
+      image: cray-product-catalog-update:0.0.0
     - name: docker-kubectl
       image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
   artifacthub.io/license: MIT
