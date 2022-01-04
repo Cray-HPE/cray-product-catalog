@@ -31,6 +31,3 @@ zypper rr {{ .zypperRepoName }}
 </details>
 
 *Note*: this SHA is the merge of {{ .PRHeadSha }} and the PR base branch. Make rocket go now! 🌮 🚀
-
-<!-- This is text used to uniquely find this comment for updating purposes -->
-<!-- csm-pr-comment-template -->
