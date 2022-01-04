@@ -163,8 +163,8 @@ jobs:
           PYMOD_VERSION: ${{ needs.build-prep.outputs.py-version }}
         run: |
           ls -lRa dist/
-          jfrog rt upload "dist/*.tar.gz" "${PYMOD_REPOSITORY}/${STABLE_PATH}/${PYMOD_NAME}/"
-          jfrog rt upload "dist/*.whl" "${PYMOD_REPOSITORY}/${STABLE_PATH}/${PYMOD_NAME}/"
+          jfrog rt upload "dist/*.tar.gz" "${PYMOD_REPOSITORY}/simple/${PYMOD_NAME}/"
+          jfrog rt upload "dist/*.whl" "${PYMOD_REPOSITORY}/simple/${PYMOD_NAME}/"
 
       - name: Upload Python Module as Build Artifact
         uses: actions/upload-artifact@v2
@@ -322,6 +322,7 @@ jobs:
       - build-prep
       - build-image
       - publish-image
+      - build-publish-helm-chart
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -329,7 +330,7 @@ jobs:
       - name: Create comment vars
         id: comment-vars
         run: |
-          echo ::set-output name=repo_name::$(echo ${GITHUB_ACTOR}_${GITHUB_REPOSITORY}_${GITHUB_REF_NAME} | sed 's|/|_|g')
+          echo ::set-output name=repo_name::$(echo ${GITHUB_REPOSITORY}_${GITHUB_REF_NAME} | sed 's|/|_|g')
 
       - name: Find Comment
         uses: peter-evans/find-comment@v1
@@ -337,25 +338,29 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Here is the image we built for you'
+          body-includes: 'Hey there committers and reviewers'
 
       - name: Render template
+        uses: chuhlomin/render-template@v1.4
         id: template
-        uses: chuhlomin/render-template@v1.2
         with:
-          template: .github/build-image-comment-template.md
+          template: .github/pr-test-script.md.tmpl
           vars: |
             fullImage: ${{ needs.build-image.outputs.full-image }}
             isStable: ${{ needs.build-prep.outputs.is-stable }}
             imageName: ${{ env.IMAGE_NAME }}
             imageTag: ${{ needs.build-image.outputs.image-tag }}
-            imageDownloadLink: ${{ needs.build-image.outputs.full-image-download-path }}
             zypperRepoName: ${{ steps.comment-vars.outputs.repo_name }}
-            PRHeadSha: ${{ github.event.pull_request.head.sha }}
+            commit: ${{ needs.build-prep.outputs.short-sha }}
+            baseBranch: ${{ github.base_ref }}
+            srcBranch: ${{ github.event.pull_request.head.ref }}
+            chartName: ${{ env.CHART_NAME }}
+            chartVersion: ${{ needs.build-prep.outputs.chart-version }}
+            pymodVersion: ${{ needs.build-prep.outputs.py-version }}
 
       - name: Create comment
-        if: steps.fc.outputs.comment-id == ''
         uses: peter-evans/create-or-update-comment@v1
+        if: steps.fc.outputs.comment-id == ''
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.template.outputs.result }}
@@ -403,7 +408,7 @@ jobs:
           github-sha: ${{ env.GITHUB_SHA }}
           image: ${{ needs.build-image.outputs.full-image }}
 
-  build-helm-chart:
+  build-publish-helm-chart:
     runs-on: ubuntu-latest
     needs:
       - build-prep

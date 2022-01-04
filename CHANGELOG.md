@@ -6,11 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Build helm chart, python module with GH actions (CASMCMS-7698)
+- Build docker image, helm chart, python module with GH actions (CASMCMS-7698)
 - Change default behavior to stop setting "active" key unless `SET_ACTIVE_VERSION`
   variable is given.
-- Fix build timestamp used by Docker image tag
-- Build docker image with GH actions (CASMCMS-7698)
 
 ## [1.4.2] - 2021-12-01
 
