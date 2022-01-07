@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Fix the draft release PR workflow to add labels
+## [1.4.6] - 2022-01-07
+
+-   Fix the draft release PR workflow to add labels
 
 ## [1.4.5] - 2022-01-07
 
@@ -66,9 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Updated repo to Gitflow branching strategy; develop branch now base branch
 -   Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.5...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.6...HEAD
+
+[1.4.6]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.5...1.4.6
 
 [1.4.5]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.4...1.4.5
-[1.4.4]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.3...1.4.4
-[1.4.3]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.2...1.4.3
 
+[1.4.4]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.3...1.4.4
+
+[1.4.3]: https://github.com/Cray-HPE/cray-product-catalog/compare/1.4.2...1.4.3
