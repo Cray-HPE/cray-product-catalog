@@ -13,21 +13,26 @@ on:
     tags:
       - 'v*'
 
-  pull_request: # opened, syncronize, reopened
-  workflow_dispatch:  # for release workflows to trigger automatic builds
-
 # Globals
 env:
+
+  # Package/artifact names
   IMAGE_NAME: cray-product-catalog-update
   CHART_NAME: cray-product-catalog
   PYMOD_NAME: cray-product-catalog
+
+  # Artifact repository locations
   REGISTRY: artifactory.algol60.net
   REGISTRY_USERNAME: github-actions-cray-hpe
   REGISTRY_DOWNLOAD_PATH: artifactory
   IMAGE_REPOSITORY: csm-docker
   CHART_REPOSITORY: csm-helm-charts
   PYMOD_REPOSITORY: csm-python-modules
+
+  # Testing variables
   CHART_UNITTEST_IMAGE: quintush/helm-unittest:3.3.0-0.2.5
+
+  # Code checker variables
   SNYK_SEVERITY_THRESHOLD: high
 
 # Workflow Jobs
@@ -361,67 +366,6 @@ jobs:
           name: deploy-script.sh
           path: deploy-script.sh
           retention-days: 30
-
-
-  # update-pr-with-artifacts:
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event_name == 'pull_request' }}
-  #   needs:
-  #     - build-prep
-  #     - build-image
-  #     - publish-image
-  #     - build-publish-helm-chart
-  #   steps:
-  #     - name: Checkout repo
-  #       uses: actions/checkout@v2
-
-  #     - name: Create comment vars
-  #       id: comment-vars
-  #       run: |
-  #         echo ::set-output name=repo_name::$(echo ${GITHUB_REPOSITORY}_${GITHUB_REF_NAME} | sed 's|/|_|g')
-
-
-  #     - name: Find Comment
-  #       uses: peter-evans/find-comment@v1
-  #       id: fc
-  #       with:
-  #         issue-number: ${{ github.event.pull_request.number }}
-  #         comment-author: 'github-actions[bot]'
-  #         body-includes: 'Hey there committers and reviewers'
-
-  #     - name: Render template
-  #       uses: chuhlomin/render-template@v1.4
-  #       id: template
-  #       with:
-  #         template: .github/pr-test-script.md.tmpl
-  #         vars: |
-  #           fullImage: ${{ needs.build-image.outputs.full-image }}
-  #           isStable: ${{ needs.build-prep.outputs.is-stable }}
-  #           imageName: ${{ env.IMAGE_NAME }}
-  #           imageTag: ${{ needs.build-image.outputs.image-tag }}
-  #           zypperRepoName: ${{ steps.comment-vars.outputs.repo_name }}
-  #           commit: ${{ needs.build-prep.outputs.short-sha }}
-  #           baseBranch: ${{ github.base_ref }}
-  #           srcBranch: ${{ github.event.pull_request.head.ref }}
-  #           chartName: ${{ env.CHART_NAME }}
-  #           chartVersion: ${{ needs.build-prep.outputs.chart-version }}
-  #           pymodVersion: ${{ needs.build-prep.outputs.py-version }}
-
-  #     - name: Create comment
-  #       uses: peter-evans/create-or-update-comment@v1
-  #       if: steps.fc.outputs.comment-id == ''
-  #       with:
-  #         issue-number: ${{ github.event.pull_request.number }}
-  #         body: ${{ steps.template.outputs.result }}
-  #         reactions: rocket
-
-  #     - name: Update comment
-  #       if: steps.fc.outputs.comment-id != ''
-  #       uses: peter-evans/create-or-update-comment@v1
-  #       with:
-  #         comment-id: ${{ steps.fc.outputs.comment-id }}
-  #         body: ${{ steps.template.outputs.result }}
-  #         edit-mode: replace
 
   sign-image-sbom:
     runs-on: ubuntu-latest

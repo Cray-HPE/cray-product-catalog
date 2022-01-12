@@ -1,0 +1,16 @@
+👋  Hey there committers and reviewers! Here's some artifacts from the source branch {{ .srcBranch }}:
+
+* Docker Image ([{{ .imageName }}:{{ .imageTag }}](https://artifactory.algol60.net/ui/repos/tree/General/csm-docker%2F{{ .isStable }}%2F{{ .imageName }}%2F{{ .imageTag }}))
+* Helm chart ([{{ .chartName }}-{{ .chartVersion }}](https://artifactory.algol60.net/ui/repos/tree/General/csm-helm-charts%2F{{ .isStable }}%2F{{ .chartName }}%2F{{ .chartName }}-{{ .chartVersion }}.tgz))
+* Python Module ([{{ .pymodVersion }}](https://artifactory.algol60.net/ui/repos/tree/General/csm-python-modules%2Fsimple%2Fcray-product-catalog%2Fcray_product_catalog-{{ .pymodVersion }}-py3-none-any.whl))
+
+Wanna deploy this change? Copy the script below to a test system and make rocket go now! 🌮 🚀
+
+<details>
+<summary>{{ .chartName }} Deploy Script</summary>
+
+```
+{{ .deployScript }}
+```
+
+</details>

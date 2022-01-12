@@ -1,0 +1,89 @@
+
+name: Add artifact information to PR
+on:
+  pull_request: 
+
+# Globals
+env:
+
+  # Package/artifact names
+  IMAGE_NAME: cray-product-catalog-update
+  CHART_NAME: cray-product-catalog
+  PYMOD_NAME: cray-product-catalog
+
+# Workflow Jobs
+jobs:
+  update-pr-with-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Download deploy script artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build-artifacts.yml
+          # Optional, the status or conclusion of a completed workflow to search for
+          # Can be one of a workflow conclusion:
+          #   "failure", "success", "neutral", "cancelled", "skipped", "timed_out", "action_required"
+          # Or a workflow status:
+          #   "completed", "in_progress", "queued"
+          workflow_conclusion: success
+          # Optional, will get head commit SHA
+          pr: ${{github.event.pull_request.number}}
+          # Optional, uploaded artifact name,
+          # will download all artifacts if not specified
+          # and extract them in respective subdirectories
+          # https://github.com/actions/download-artifact#download-all-artifacts
+          name: deploy-script.sh
+          # Optional, check the workflow run whether it has an artifact
+          # then will get the last available artifact from previous workflow
+          # default false, just try to download from the last one
+          check_artifacts:  false
+          # Optional, search for the last workflow run whose stored an artifact named as in `name` input
+          # default false
+          search_artifacts: false
+
+      - name: Get deploy script as a variable
+        id: scriptvar
+        run: |
+          echo ::set-output name=deploy_script::$(cat deploy-script.sh)
+
+      - name: Render artifacts comment template
+        uses: chuhlomin/render-template@v1.4
+        id: template
+        with:
+          template: .github/templates/pr-artifacts.md.tmpl
+          vars: |
+            deployScript: ${{ steps.scriptvar.outputs.deploy_script }}
+            srcBranch: ${{ github.event.pull_request.head.ref }}
+            isStable: ${{ needs.build-prep.outputs.is-stable }}
+            imageName: ${{ env.IMAGE_NAME }}
+            imageTag: ${{ needs.build-image.outputs.image-tag }}
+            chartName: ${{ env.CHART_NAME }}
+            chartVersion: ${{ needs.build-prep.outputs.chart-version }}
+            pymodVersion: ${{ needs.build-prep.outputs.py-version }}
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Hey there committers and reviewers'
+
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v1
+        if: steps.fc.outputs.comment-id == ''
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.template.outputs.result }}
+          reactions: rocket
+
+      - name: Update comment
+        if: steps.fc.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body: ${{ steps.template.outputs.result }}
+          edit-mode: replace
