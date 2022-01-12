@@ -316,42 +316,38 @@ jobs:
         env:
           IMAGE: ${{ needs.build-image.outputs.full-image }}
 
-  update-pr-with-artifacts:
+  publish-deploy-script:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
     needs:
       - build-prep
       - build-image
       - publish-image
       - build-publish-helm-chart
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Create comment vars
-        id: comment-vars
+      - name: Create additional template vars
+        id: vars
         run: |
           echo ::set-output name=repo_name::$(echo ${GITHUB_REPOSITORY}_${GITHUB_REF_NAME} | sed 's|/|_|g')
 
-      - name: Find Comment
-        uses: peter-evans/find-comment@v1
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: 'Hey there committers and reviewers'
-
-      - name: Render template
+      - name: Render deploy script template
         uses: chuhlomin/render-template@v1.4
         id: template
         with:
-          template: .github/pr-test-script.md.tmpl
+          result_path: deploy-script.sh
+          template: .github/templates/deploy-script.sh.tmpl
           vars: |
+            buildDateTime: ${{ needs.build-prep.outputs.build-date-time }} 
+            repository: ${{ env.GITHUB_REPOSITORY }}
+            run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
             fullImage: ${{ needs.build-image.outputs.full-image }}
             isStable: ${{ needs.build-prep.outputs.is-stable }}
             imageName: ${{ env.IMAGE_NAME }}
             imageTag: ${{ needs.build-image.outputs.image-tag }}
-            zypperRepoName: ${{ steps.comment-vars.outputs.repo_name }}
+            zypperRepoName: ${{ steps.vars.outputs.repo_name }}
             commit: ${{ needs.build-prep.outputs.short-sha }}
             baseBranch: ${{ github.base_ref }}
             srcBranch: ${{ github.event.pull_request.head.ref }}
@@ -359,21 +355,73 @@ jobs:
             chartVersion: ${{ needs.build-prep.outputs.chart-version }}
             pymodVersion: ${{ needs.build-prep.outputs.py-version }}
 
-      - name: Create comment
-        uses: peter-evans/create-or-update-comment@v1
-        if: steps.fc.outputs.comment-id == ''
+      - name: Upload Deploy Script as Build Artifact
+        uses: actions/upload-artifact@v2
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.template.outputs.result }}
-          reactions: rocket
+          name: deploy-script.sh
+          path: deploy-script.sh
+          retention-days: 30
 
-      - name: Update comment
-        if: steps.fc.outputs.comment-id != ''
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          body: ${{ steps.template.outputs.result }}
-          edit-mode: replace
+
+  # update-pr-with-artifacts:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name == 'pull_request' }}
+  #   needs:
+  #     - build-prep
+  #     - build-image
+  #     - publish-image
+  #     - build-publish-helm-chart
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v2
+
+  #     - name: Create comment vars
+  #       id: comment-vars
+  #       run: |
+  #         echo ::set-output name=repo_name::$(echo ${GITHUB_REPOSITORY}_${GITHUB_REF_NAME} | sed 's|/|_|g')
+
+
+  #     - name: Find Comment
+  #       uses: peter-evans/find-comment@v1
+  #       id: fc
+  #       with:
+  #         issue-number: ${{ github.event.pull_request.number }}
+  #         comment-author: 'github-actions[bot]'
+  #         body-includes: 'Hey there committers and reviewers'
+
+  #     - name: Render template
+  #       uses: chuhlomin/render-template@v1.4
+  #       id: template
+  #       with:
+  #         template: .github/pr-test-script.md.tmpl
+  #         vars: |
+  #           fullImage: ${{ needs.build-image.outputs.full-image }}
+  #           isStable: ${{ needs.build-prep.outputs.is-stable }}
+  #           imageName: ${{ env.IMAGE_NAME }}
+  #           imageTag: ${{ needs.build-image.outputs.image-tag }}
+  #           zypperRepoName: ${{ steps.comment-vars.outputs.repo_name }}
+  #           commit: ${{ needs.build-prep.outputs.short-sha }}
+  #           baseBranch: ${{ github.base_ref }}
+  #           srcBranch: ${{ github.event.pull_request.head.ref }}
+  #           chartName: ${{ env.CHART_NAME }}
+  #           chartVersion: ${{ needs.build-prep.outputs.chart-version }}
+  #           pymodVersion: ${{ needs.build-prep.outputs.py-version }}
+
+  #     - name: Create comment
+  #       uses: peter-evans/create-or-update-comment@v1
+  #       if: steps.fc.outputs.comment-id == ''
+  #       with:
+  #         issue-number: ${{ github.event.pull_request.number }}
+  #         body: ${{ steps.template.outputs.result }}
+  #         reactions: rocket
+
+  #     - name: Update comment
+  #       if: steps.fc.outputs.comment-id != ''
+  #       uses: peter-evans/create-or-update-comment@v1
+  #       with:
+  #         comment-id: ${{ steps.fc.outputs.comment-id }}
+  #         body: ${{ steps.template.outputs.result }}
+  #         edit-mode: replace
 
   sign-image-sbom:
     runs-on: ubuntu-latest

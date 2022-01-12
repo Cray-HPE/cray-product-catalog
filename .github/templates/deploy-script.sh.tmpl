@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# This deploy script was created on {{ .buildDate }} based on artifacts from
+# {{ .commit }} on the {{ .srcBranch }} in the {{ .repository }} by
+# {{ .run }}.
+
+cat <<EOF > image-download-{{ .commit }}.sh
+#!/usr/bin/env bash
+
+zypper addrepo https://slemaster.us.cray.com/SUSE/Products/SLE-Module-Server-Applications/15-SP2/x86_64/product {{ .zypperRepoName }}
+zypper refresh
+zypper in -y --repo {{ .zypperRepoName }} skopeo
+echo "Downloading remote image {{ .fullImage }} to system registry"
+skopeo copy --dest-tls-verify=false docker://{{ .fullImage }} docker://registry.local/cray/{{ .imageName }}:{{ .imageTag }}
+zypper rr {{ .zypperRepoName }}
+EOF
+
+cat <<EOF > manifest.raw.{{ .commit }}.yaml
+apiVersion: manifests/v1beta1
+metadata:
+  name: {{ .chartName }}-{{ .commit }}-manifest
+spec:
+  sources:
+    charts:
+      - name: csm-algol60
+        type: repo
+        location: https://artifactory.algol60.net/artifactory/csm-helm-charts
+  charts:
+    - name: {{ .chartName }}
+      source: csm-algol60
+      version: "{{ .chartVersion }}"
+      namespace: services
+EOF
+
+chmod +x ./image-download-{{ .commit }}.sh && ./image-download-{{ .commit }}.sh
+
+kubectl get secrets -n loftsman site-init -o jsonpath='{.data.customizations\.yaml}' | base64 -d > customizations.yaml
+manifestgen -i manifest.raw.{{ .commit }}.yaml -c customizations.yaml -o manifest-{{ .chartName }}-{{ .commit }}.yaml
+
+echo "Rendered manifest"
+cat ./manifest-{{ .chartName }}-{{ .commit }}.yaml
+
+loftsman ship --manifest-path ./manifest-{{ .chartName }}-{{ .commit }}.yaml
