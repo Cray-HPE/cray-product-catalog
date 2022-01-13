@@ -35,7 +35,6 @@ jobs:
 
       # If anything else needs to be done (bump version files etc) to generate
       # a release in this repository, do it here
-
       - name: Push new branch
         uses: stefanzweifel/git-auto-commit-action@v4
         id: auto-commit-action
@@ -104,3 +103,4 @@ jobs:
           GITHUB_TOKEN: ${{ steps.get-token.outputs.token }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
+
