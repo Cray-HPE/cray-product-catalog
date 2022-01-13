@@ -20,18 +20,12 @@ jobs:
         run: |
           env | sort
           echo ${GITHUB_REF}
-          echo ${{ github.head_ref }}
-          echo ${IS_RELEASE}
-          echo ${IS_HOTFIX}
-          if [[ "${IS_RELEASE}" = "true" ]]; then
-            VERSION=${${{ github.head_ref }}##refs/heads/release/}
-          else
-            VERSION=${${{ github.head_ref }}##refs/heads/hotfix/}
+          if [[ "${{ contains(github.head_ref, 'release') }}" = "true" ]]; then
+            VERSION=${GITHUB_HEAD_REF##refs/heads/release/}
           fi
-          echo ::set-output name=version::$(echo ${VERSION})
-        env:
-          IS_RELEASE: "${{ contains(github.head_ref, 'release') }}"
-          IS_HOTFIX: "${{ contains(github.head_ref, 'hotfix') }}"
+          if [[ "${{ contains(github.head_ref, 'hotfix') }}" = "true" ]]; then
+            VERSION=${GITHUB_HEAD_REF##refs/heads/hotfix/}
+          fi
 
       - run: |
           echo ${{ env.VERSION }}
