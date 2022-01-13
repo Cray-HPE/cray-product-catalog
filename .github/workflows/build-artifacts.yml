@@ -3,12 +3,15 @@ on:
   workflow_dispatch:
   push:
     # Do not build pushes to the main/master branch, tags build prod releases
-    # Do not build release branches from historical CSM/Shasta releases
-    branches-ignore:
-      - main
-      - master
-      - 'releases/csm-**'
-      - 'releases/shasta-**'
+    # Do not build release branches from historical CSM/Shasta release branches
+    branches:
+      - feature/**
+      - hotfix/**
+      - support/**
+      - develop
+      - 'release/**'
+      - '!release/csm-**'
+      - '!release/shasta-**'
 
     # Build production releases from tags on main/master, see GitFlow
     tags:
