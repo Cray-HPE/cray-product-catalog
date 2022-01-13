@@ -1,5 +1,6 @@
 name: Build Test Scan Publish Artifacts
 on:
+  workflow_dispatch:
   push:
     # Do not build pushes to the main/master branch, tags build prod releases
     # Do not build release branches from historical CSM/Shasta releases
