@@ -53,6 +53,7 @@ jobs:
       minor: ${{ steps.buildprepversion.outputs.minor }}
       patch: ${{ steps.buildprepversion.outputs.patch }}
       commits-since-last-version: ${{ steps.buildprepversion.outputs.commits-since-last-version }}
+      pre-release-tag: ${{ steps.buildprepversion.outputs.pre-release-tag }}
 
     steps:
       - name: Prep build metdata and fetch version
@@ -64,8 +65,13 @@ jobs:
         shell: bash
         run: |
           echo ::set-output name=chart-version::$(echo ${{ steps.buildprepversion.outputs.version }}+${{ steps.buildprepversion.outputs.build-date-time }}.${{ steps.buildprepversion.outputs.short-sha }})
-          echo ::set-output name=image-version::$(echo ${{ steps.buildprepversion.outputs.version }}.${{ steps.buildprepversion.outputs.build-date-time }}.${{ steps.buildprepversion.outputs.short-sha }})
-          if [[ ${{ steps.buildprepversion.outputs.is-stable}} = unstable ]]; then
+          echo ::set-output name=pre-release-tag::$(echo ${{ env.GITVERSION_PRERELEASETAG }})
+          if [[ "${{ env.GITVERSION_PRERELEASETAG }}" = "" ]]; then
+            echo ::set-output name=image-version::$(echo ${{ steps.buildprepversion.outputs.version }}-${{ steps.buildprepversion.outputs.build-date-time }}.${{ steps.buildprepversion.outputs.short-sha }})
+          else
+            echo ::set-output name=image-version::$(echo ${{ steps.buildprepversion.outputs.version }}.${{ steps.buildprepversion.outputs.build-date-time }}.${{ steps.buildprepversion.outputs.short-sha }})
+          fi
+          if [[ ${{ steps.buildprepversion.outputs.is-stable }} = unstable ]]; then
             echo ::set-output name=py-version::$(echo ${{ steps.buildprepversion.outputs.major }}.${{ steps.buildprepversion.outputs.minor }}.${{ steps.buildprepversion.outputs.patch }}.dev${{ steps.buildprepversion.outputs.commits-since-last-version }})
           else
             echo ::set-output name=py-version::$(echo ${{ steps.buildprepversion.outputs.major }}.${{ steps.buildprepversion.outputs.minor }}.${{ steps.buildprepversion.outputs.patch }})
