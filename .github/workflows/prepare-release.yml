@@ -4,8 +4,13 @@
 name: "Prepare for Release"
 
 on:
-  pull_request_target:
-    branch: master
+  pull_request:
+    branches:
+      - release/**
+      - hotfix/**
+      - '!release/csm-1.0'
+      - '!release/csm-1.2'
+      - '!release/shasta-1.4'
     types: [ opened ]
 
 jobs:
@@ -14,12 +19,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: find version from branch name
+        id: get-version
+        run: |
+          if ${IS_RELEASE}; then
+            VERSION=${REF##refs/heads/release/}
+          else
+            VERSION=${REF##refs/heads/hotfix/}
+          fi
+          echo ::set-output name=version::$(echo ${VERSION})
+        env:
+          REF: ${{ github.events.pull_request.head.ref}}
+          IS_RELEASE: ${{ contains(github.events.pull_request.head.ref, 'release')}}
+          IS_HOTFIX: ${{ contains(github.events.pull_request.head.ref, 'hotfix')}}
+
       - run: |
-          env | sort
+          echo ${{ env.VERSION }}
+        env:
+          VERSION: ${{ steps.get-version.outputs.version }}
+
       # - name: Update changelog
       #   uses: thomaseizinger/keep-a-changelog-new-release@1.3.0
       #   with:
-      #     tag: ${{ github.event.inputs.version }}
+      #     tag: ${{ steps.get-version.outputs.version }}
 
       # # If anything else needs to be done (bump version files etc) to generate
       # # a release in this repository, do it here
@@ -28,7 +50,7 @@ jobs:
       #   uses: stefanzweifel/git-auto-commit-action@v4
       #   id: auto-commit-action
       #   with:
-      #     commit_message: "[bot] Prepare release ${{ github.event.inputs.version }}"
+      #     commit_message: "[bot] Prepare release ${{ steps.get-version.outputs.version }}"
       #     commit_user_name: "github-actions[bot]"
-      #     branch: release/${{ github.event.inputs.version }}
+      #     branch: ${{ github.events.pull_request.head.ref }}
 
