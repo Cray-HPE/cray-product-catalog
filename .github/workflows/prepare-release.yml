@@ -18,16 +18,15 @@ jobs:
       - name: find version from branch name
         id: get-version
         run: |
-          if ${IS_RELEASE}; then
-            VERSION=${REF##refs/heads/release/}
-          else
-            VERSION=${REF##refs/heads/hotfix/}
+          env | sort
+          echo ${GITHUB_HEAD_REF}
+          if [[ "${{ contains(github.head_ref, 'release') }}" = "true" ]]; then
+            VERSION=${GITHUB_HEAD_REF##release/}
+          fi
+          if [[ "${{ contains(github.head_ref, 'hotfix') }}" = "true" ]]; then
+            VERSION=${GITHUB_HEAD_REF##hotfix/}
           fi
           echo ::set-output name=version::$(echo ${VERSION})
-        env:
-          REF: ${{ github.events.pull_request.head.ref}}
-          IS_RELEASE: ${{ contains(github.events.pull_request.head.ref, 'release')}}
-          IS_HOTFIX: ${{ contains(github.events.pull_request.head.ref, 'hotfix')}}
 
       - run: |
           echo ${{ env.VERSION }}
