@@ -63,7 +63,7 @@ jobs:
           tag: ${{ github.event.inputs.version }}
 
       - name: Get release artifacts.json file
-        uses: robinraju/release-downloader@v1.3
+        uses: robinraju/release-downloader@v1.6
         with:
           repository: ${{ github.repository }}
           tag: ${{ github.event.inputs.version }}
