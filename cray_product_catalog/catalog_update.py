@@ -57,6 +57,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+SUB_CONFIG_MAP = CONFIG_MAP + "-" + PRODUCT
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -65,6 +66,7 @@ YAML_CONTENT_STRING = os.environ.get("YAML_CONTENT_STRING", "").strip()   # see 
 SET_ACTIVE_VERSION = bool(os.environ.get("SET_ACTIVE_VERSION"))
 REMOVE_ACTIVE_FIELD = bool(os.environ.get("REMOVE_ACTIVE_FIELD"))
 VALIDATE_SCHEMA = bool(os.environ.get("VALIDATE_SCHEMA"))
+SUB_CM_FIELDS_LIST = ['component_versions']
 
 ERR_NOT_FOUND = 404
 ERR_CONFLICT = 409
@@ -167,11 +169,23 @@ def update_config_map(data, name, namespace):
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # Config map doesn't exist yet
-            if e.status == ERR_NOT_FOUND:
-                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
-                continue
+            if (name == CONFIG_MAP):
+                if e.status == ERR_NOT_FOUND:
+                    LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
+                    continue
+                else:
+                    raise  # unrecoverable
             else:
-                raise  # unrecoverable
+                ''' This part of code might be deleted if the migration of cray-product-catalog data
+                to main and sub config map is done prior this change is updated'''
+                LOGGER.warning("Sub ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
+                new_cm = V1ConfigMap()
+                new_cm.metadata = V1ObjectMeta(name=name)
+                api_instance.create_namespaced_config_map(
+                    namespace=namespace, body=new_cm
+                )
+                LOGGER.debug(f'Created new sub config map {namespace}/{name}')
+                continue
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no config map data exists
@@ -232,6 +246,15 @@ def update_config_map(data, name, namespace):
             else:
                 LOGGER.exception("Error calling replace_namespaced_config_map")
 
+def split_catalog_data(data, main_cm_data, sub_cm_data):
+    LOGGER.debug("Splitting cray-product-catalog data")
+    for k in set(list(data.keys())) - set(SUB_CM_FIELDS_LIST):
+        main_cm_data.update({k: data[k]})
+
+    for key in SUB_CM_FIELDS_LIST:
+        sub_data = data[key]
+        sub_cm_data.update({key: sub_data})
+    
 
 def main():
     configure_logging()
@@ -270,9 +293,13 @@ def main():
         raise SystemExit(1)
     if VALIDATE_SCHEMA:
         validate_schema(data)
+        
+    sub_cm_data = {}
+    main_cm_data = {}
+    split_catalog_data(data, main_cm_data, sub_cm_data)   
 
-    update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
-
-
+    update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    update_config_map(main_cm_data, SUB_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    
 if __name__ == "__main__":
     main()
