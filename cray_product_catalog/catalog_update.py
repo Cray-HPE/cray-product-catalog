@@ -131,6 +131,7 @@ def active_field_exists(product_data):
     return any("active" in product_data[version] for version in product_data)
 
 def create_config_map(api_instance, name, namespace):
+    """Create new product config map."""
     new_cm = V1ConfigMap()
     new_cm.metadata = V1ObjectMeta(name=name)
     api_instance.create_namespaced_config_map(
@@ -249,6 +250,7 @@ def update_config_map(data, name, namespace):
                 LOGGER.exception("Error calling replace_namespaced_config_map")
 
 def split_catalog_data(data):
+    """Split the passed data into data needed by main and product config map"""
     main_cm_data = {}
     prod_cm_data = {}
     LOGGER.debug("Splitting cray-product-catalog data")
