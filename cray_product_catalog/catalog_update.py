@@ -305,7 +305,7 @@ def main():
     main_cm_data, prod_cm_data = split_catalog_data(data)
 
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
-    update_config_map(main_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
     
 if __name__ == "__main__":
     main()
