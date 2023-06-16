@@ -50,6 +50,7 @@ from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util.k8s import load_k8s
 from cray_product_catalog.util.merge_dict import merge_dict
+from cray_product_catalog.util.catalog_data_helper import split_catalog_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -57,6 +58,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+PRODUCT_CONFIG_MAP = CONFIG_MAP + "-" + PRODUCT
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -129,6 +131,16 @@ def active_field_exists(product_data):
     return any("active" in product_data[version] for version in product_data)
 
 
+def create_config_map(api_instance, name, namespace):
+    """Create new product config map."""
+    new_cm = V1ConfigMap()
+    new_cm.metadata = V1ObjectMeta(name=name)
+    api_instance.create_namespaced_config_map(
+        namespace=namespace, body=new_cm
+    )
+    LOGGER.debug("Created product config map %s/%s", namespace, name)
+    
+
 def update_config_map(data, name, namespace):
     """
     Get the config map `data` to be added.
@@ -168,7 +180,16 @@ def update_config_map(data, name, namespace):
 
             # Config map doesn't exist yet
             if e.status == ERR_NOT_FOUND:
-                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
+                if name == CONFIG_MAP: 
+                    #If main config map is not found wait until it is available
+                    LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
+                else:
+                    ''' This part of code might be deleted if the migration of cray-product-catalog data
+                    to main and sub config map is done prior this change is updated'''
+                    
+                    #If product config map is not available then create
+                    LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
+                    create_config_map(api_instance, name, namespace)
                 continue
             else:
                 raise  # unrecoverable
@@ -271,7 +292,12 @@ def main():
     if VALIDATE_SCHEMA:
         validate_schema(data)
 
-    update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    LOGGER.debug("Splitting cray-product-catalog data")
+    main_cm_data, prod_cm_data = split_catalog_data(data)
+
+    update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    if prod_cm_data:
+        update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
 
 if __name__ == "__main__":
