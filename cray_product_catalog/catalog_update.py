@@ -196,20 +196,19 @@ def update_config_map(data, name, namespace):
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # Config map doesn't exist yet
-            if e.status == ERR_NOT_FOUND:
-                if name == CONFIG_MAP: 
-                    #If main config map is not found wait until it is available
-                    LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
-                else:
-                    ''' This part of code might be deleted if the migration of cray-product-catalog data
-                    to main and sub config map is done prior this change is updated'''
-                    
-                    #If product config map is not available then create
-                    LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
-                    create_config_map(api_instance, name, namespace)
-                continue
+            if e.status != ERR_NOT_FOUND:
+                raise   #unrecoverable            
+            elif name == CONFIG_MAP: 
+                #If main config map is not found wait until it is available
+                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
             else:
-                raise  # unrecoverable
+                ''' This part of code might be deleted if the migration of cray-product-catalog data
+                to main and sub config map is done prior this change is updated'''
+                
+                #If product config map is not available then create
+                LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
+                create_config_map(api_instance, name, namespace)
+            continue
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no config map data exists
