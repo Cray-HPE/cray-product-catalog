@@ -58,7 +58,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
-PRODUCT_CONFIG_MAP = CONFIG_MAP + "-" + PRODUCT
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -73,6 +72,24 @@ ERR_CONFLICT = 409
 
 LOGGER = logging.getLogger(__name__)
 
+
+def format_product_cm_name():
+    """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key under data in cm.
+    Below are the rules for configmap name. The name of a ConfigMap must be a valid DNS subdomain name.
+    - contain no more than 253 characters
+    - contain only lowercase alphanumeric characters, '-' or '.'
+    - start with an alphanumeric character
+    - end with an alphanumeric character
+     
+    Rules for Product name which is a key under the data
+    - must be alphanumeric characters, -, _ or .
+    
+    Since product name can have upper case and '_' which are prohibited in config name, 
+    we are converting '_' to '-' and upper case to lower case
+    """
+    return CONFIG_MAP + '-' + PRODUCT.replace('_','-').lower()
+    
+PRODUCT_CONFIG_MAP = format_product_cm_name()
 
 def validate_schema(data):
     """ Validate data against the schema. """
@@ -296,6 +313,8 @@ def main():
     main_cm_data, prod_cm_data = split_catalog_data(data)
 
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    
+    #If prod_cm_data is not an empty dict
     if prod_cm_data:
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
