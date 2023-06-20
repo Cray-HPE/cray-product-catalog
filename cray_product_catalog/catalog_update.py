@@ -58,7 +58,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
-PRODUCT_CONFIG_MAP = CONFIG_MAP + "-" + PRODUCT
+# Formatting prod name as we cannot create a config map with upper case and '_'. 
+# Changing '_' to '-' and upper case to lower case
+FORMATTED_PROD_NAME = PRODUCT.replace('_', '-').lower() 
+PRODUCT_CONFIG_MAP = CONFIG_MAP + "-" + FORMATTED_PROD_NAME
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -296,7 +299,9 @@ def main():
     main_cm_data, prod_cm_data = split_catalog_data(data)
 
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
-    if prod_cm_data:
+    
+    #If prod_cm_data is not an empty dict
+    if prod_cm_data: 
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
 
