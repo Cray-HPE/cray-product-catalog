@@ -28,9 +28,7 @@ def split_catalog_data(data):
     """Split the passed data into data needed by main and product config map"""
     all_unique_keys = set(data.keys())
     comm_keys_bw_cms = all_unique_keys.intersection(PRODUCT_CM_FIELDS)
-    
-    #If fields in PRODUCT_CM_FIELDS is not available in all unique keys return empty dict as second return value
-    if not comm_keys_bw_cms: 
+    if not comm_keys_bw_cms:
         return {key:data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, {}
     else:
         return {key:data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \

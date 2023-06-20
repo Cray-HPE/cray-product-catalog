@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.9] - 2023-06-20
+
+### Added
+
+- CASM-4350: Implement a proto type of Split config maps, to store cray-product-catalog data...
+
 ## [1.8.8] - 2023-05-31
 
 ### Changed
