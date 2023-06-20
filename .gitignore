@@ -5,9 +5,3 @@ dist/
 
 # VS Code config
 workspace.code-workspace
-
-# cache files
-**__pycache__**
-
-# pycharm specific
-.idea
