@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CASM-4350: Resolve 1MB size limitation of K8s Configmap cray-product-catalog by splitting 
+  it's content across sub/product configmaps
+
 ## [1.8.12] - 2023-07-18
 
 ### Dependencies
