@@ -35,3 +35,20 @@ def split_catalog_data(data):
     else:
         return {key:data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
         {key:data[key] for key in comm_keys_bw_cms}   
+        
+
+def format_product_cm_name(config_map, product):
+    """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key under data in cm.
+    Below are the rules for configmap name. The name of a ConfigMap must be a valid DNS subdomain name.
+    - contain no more than 253 characters
+    - contain only lowercase alphanumeric characters, '-' or '.'
+    - start with an alphanumeric character
+    - end with an alphanumeric character
+     
+    Rules for Product name which is a key under the data
+    - must be alphanumeric characters, -, _ or .
+    
+    Since product name can have upper case and '_' which are prohibited in config name, 
+    we are converting '_' to '-' and upper case to lower case
+    """
+    return config_map + '-' + product.replace('_','-').lower()

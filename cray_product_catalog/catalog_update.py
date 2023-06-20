@@ -50,7 +50,7 @@ from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util.k8s import load_k8s
 from cray_product_catalog.util.merge_dict import merge_dict
-from cray_product_catalog.util.catalog_data_helper import split_catalog_data
+from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -58,6 +58,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
 CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -71,25 +72,6 @@ ERR_NOT_FOUND = 404
 ERR_CONFLICT = 409
 
 LOGGER = logging.getLogger(__name__)
-
-
-def format_product_cm_name():
-    """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key under data in cm.
-    Below are the rules for configmap name. The name of a ConfigMap must be a valid DNS subdomain name.
-    - contain no more than 253 characters
-    - contain only lowercase alphanumeric characters, '-' or '.'
-    - start with an alphanumeric character
-    - end with an alphanumeric character
-     
-    Rules for Product name which is a key under the data
-    - must be alphanumeric characters, -, _ or .
-    
-    Since product name can have upper case and '_' which are prohibited in config name, 
-    we are converting '_' to '-' and upper case to lower case
-    """
-    return CONFIG_MAP + '-' + PRODUCT.replace('_','-').lower()
-    
-PRODUCT_CONFIG_MAP = format_product_cm_name()
 
 def validate_schema(data):
     """ Validate data against the schema. """
