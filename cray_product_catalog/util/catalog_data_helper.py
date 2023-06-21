@@ -22,7 +22,11 @@
 #
 # Contains a utility functions for parsing catalog data.
 
-PRODUCT_CM_FIELDS = {'component_versions'}
+import re
+
+from cray_product_catalog.constants import (
+    PRODUCT_CM_FIELDS
+)
 
 def split_catalog_data(data):
     """Split the passed data into data needed by main and product config map"""
@@ -44,11 +48,17 @@ def format_product_cm_name(config_map, product):
     - contain only lowercase alphanumeric characters, '-' or '.'
     - start with an alphanumeric character
     - end with an alphanumeric character
-     
     Rules for Product name which is a key under the data
     - must be alphanumeric characters, -, _ or .
-    
-    Since product name can have upper case and '_' which are prohibited in config name, 
+    Since product name can have upper case and '_' which are prohibited in config name,
     we are converting '_' to '-' and upper case to lower case
     """
-    return config_map + '-' + product.replace('_','-').lower()
+    pat = re.compile('^([a-z0-9])*[a-z0-9.-]*([a-z0-9])$')
+    prod_config_map = config_map + '-' + product.replace('_', '-').lower()
+
+    if len(prod_config_map) > 253:
+        return ''
+    elif not re.fullmatch(pat, prod_config_map):
+        return ''
+    else:
+        return prod_config_map
