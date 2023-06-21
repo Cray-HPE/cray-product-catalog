@@ -52,13 +52,24 @@ import yaml
 
 from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.util import load_k8s
+from cray_product_catalog.util.catalog_data_helper import format_product_cm_name
+
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = logging.getLogger(__name__)
+PRODUCT = os.environ.get("PRODUCT").strip()  # required
+PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
+CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
+CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
+MAX_RETRIES = 100
+MAX_RETRIES_FOR_PROD_CM = 10
 
+ERR_NOT_FOUND = 404
+ERR_CONFLICT = 409
 
-def modify_config_map(name, namespace, product, product_version, key=None):
+def modify_config_map(name, namespace, product, product_version, max_attempts, key=None):
     """Remove a product version from the catalog config map.
 
     If a key is specified, delete the `key` content from a specific section
@@ -79,7 +90,7 @@ def modify_config_map(name, namespace, product, product_version, key=None):
     k8sclient.rest_client.pool_manager.connection_pool_kw['retries'] = retry
     api_instance = client.CoreV1Api(k8sclient)
     attempt = 0
-    max_attempts = 100
+    #max_attempts = 100
 
     while True:
 
@@ -93,17 +104,20 @@ def modify_config_map(name, namespace, product, product_version, key=None):
 
         # Read in the config map
         try:
-            response = api_instance.read_namespaced_config_map(name, namespace)
+            response = api_instance.read_namespaced_config_map(name, namespace)            
         except ApiException as e:
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # Config map doesn't exist yet
-            if e.status == 404 and attempt < max_attempts:
+            if e.status != ERR_NOT_FOUND and attempt > max_attempts:
+                raise   # unrecoverable
+            elif attempt == max_attempts and name != CONFIG_MAP:                
+                LOGGER.info("ConfigMap %s/%s doesn't exist, so nothing to delete")
+                return
+            else:
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
                 continue
-            else:
-                raise  # unrecoverable
-
+            
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no config map data exists
         if product not in config_map_data:
@@ -153,25 +167,36 @@ def modify_config_map(name, namespace, product, product_version, key=None):
                 name, namespace, client.V1ConfigMap(data=config_map_data)
             )
             LOGGER.info("ConfigMap update attempt %s successful", attempt)
-        except ApiException:
-            LOGGER.exception("Error calling patch_namespaced_config_map")
+        except ApiException as e:
+            if e.status == ERR_CONFLICT:
+                # A conflict is raised if the resourceVersion field was unexpectedly
+                # incremented, e.g. if another process updated the config map. This
+                # provides concurrency protection.
+                LOGGER.warning("Conflict updating config map")
+            else:
+                LOGGER.exception("Error calling patch_namespaced_config_map")
 
 
 def main():
     configure_logging()
     # Parameters to identify config map and product/version to remove
-    PRODUCT = os.environ.get("PRODUCT").strip()  # required
-    PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
-    CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
-    CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
+    
     KEY = os.environ.get("KEY", "").strip() or None
-
-    args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY)
+    
+    load_k8s()
+        
+    args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES, KEY)
     LOGGER.info(
         "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
         *args
-    )
-    load_k8s()
+    )    
+    modify_config_map(*args)
+    
+    args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES_FOR_PROD_CM, KEY)
+    LOGGER.info(
+        "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
+        *args
+    )    
     modify_config_map(*args)
 
 
