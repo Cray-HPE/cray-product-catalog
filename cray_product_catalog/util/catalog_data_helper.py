@@ -34,14 +34,14 @@ def split_catalog_data(data):
     all_unique_keys = set(data.keys())
     comm_keys_bw_cms = all_unique_keys.intersection(PRODUCT_CM_FIELDS)
 
-    # If fields in PRODUCT_CM_FIELDS is not available in all unique keys return 
+    # If fields in PRODUCT_CM_FIELDS is not available in all unique keys return
     # empty dict as second return value
     if not comm_keys_bw_cms:
         return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, {}
     else:
         return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
             {key: data[key] for key in comm_keys_bw_cms}
- 
+
 
 def format_product_cm_name(config_map, product):
     """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key under data in cm.
