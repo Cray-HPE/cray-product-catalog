@@ -44,7 +44,7 @@ yaml_data = """
     - members:
       - uan-2.6.0-sle-15sp4
       name: uan-2.6-sle-15sp4
-      type: group       
+      type: group
     manifests:
     - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml
   configuration:
@@ -83,7 +83,7 @@ yaml_data_missing_main_data = """
     - members:
       - uan-2.6.0-sle-15sp4
       name: uan-2.6-sle-15sp4
-      type: group       
+      type: group
     manifests:
     - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml"""
 
@@ -106,15 +106,15 @@ def test_split_data_sanity():
     }
     prod_cm_data_expected = {
         'component_versions':
-            {
-                'docker': [
-                    {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
-                    {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update', 'version': '1.3.2'}],
-                'helm': [
-                    {'name': 'cray-uan-install', 'version': '1.11.1'}],
-                'repositories': [
-                    {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
-                'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
+        {
+            'docker': [
+                {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
+                {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update', 'version': '1.3.2'}],
+            'helm': [
+                {'name': 'cray-uan-install', 'version': '1.11.1'}],
+            'repositories': [
+                {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
+            'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
         }
     }
 
