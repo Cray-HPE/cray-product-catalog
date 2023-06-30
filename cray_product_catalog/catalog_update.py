@@ -313,7 +313,7 @@ def main():
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
     # If PRODUCT_CONFIG_MAP is not an empty string and prod_cm_data is not an empty dict
-    if prod_cm_data:
+    if PRODUCT_CONFIG_MAP != '' and prod_cm_data:
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
 
