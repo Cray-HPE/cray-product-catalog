@@ -180,15 +180,12 @@ def update_config_map(data, name, namespace):
 
             # Config map doesn't exist yet
             if e.status != ERR_NOT_FOUND:
-                raise   #unrecoverable
+                raise   # unrecoverable
             elif name == CONFIG_MAP:
-                #If main config map is not found wait until it is available
+                # If main config map is not found wait until it is available
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
             else:
-                ''' This part of code might be deleted if the migration of cray-product-catalog data
-                to main and sub config map is done prior this change is updated'''
-
-                #If product config map is not available then create
+                # If product config map is not available then create
                 LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
                 create_config_map(api_instance, name, namespace)
             continue
@@ -296,8 +293,8 @@ def main():
 
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
-    #If prod_cm_data is not an empty dict
-    if prod_cm_data:
+    # If PRODUCT_CONFIG_MAP is not an empty string and prod_cm_data is not an empty dict
+    if PRODUCT_CONFIG_MAP != '' and prod_cm_data:
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
 

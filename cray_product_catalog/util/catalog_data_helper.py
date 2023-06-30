@@ -22,6 +22,8 @@
 #
 # Contains a utility function for merging two dictionaries together.
 
+import re
+
 from cray_product_catalog.constants import (
     PRODUCT_CM_FIELDS
 )
@@ -32,12 +34,12 @@ def split_catalog_data(data):
     all_unique_keys = set(data.keys())
     comm_keys_bw_cms = all_unique_keys.intersection(PRODUCT_CM_FIELDS)
 
-    #If fields in PRODUCT_CM_FIELDS is not available in all unique keys return empty dict as second return value
+    # If fields in PRODUCT_CM_FIELDS is not available in all unique keys return empty dict as second return value
     if not comm_keys_bw_cms:
-        return {key:data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, {}
+        return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, {}
     else:
-        return {key:data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
-        {key:data[key] for key in comm_keys_bw_cms}
+        return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
+            {key: data[key] for key in comm_keys_bw_cms}
 
 
 def format_product_cm_name(config_map, product):
@@ -52,4 +54,12 @@ def format_product_cm_name(config_map, product):
     Since product name can have upper case and '_' which are prohibited in config name,
     we are converting '_' to '-' and upper case to lower case
     """
-    return config_map + '-' + product.replace('_', '-').lower()
+    pat = re.compile('^([a-z0-9])*[a-z0-9.-]*([a-z0-9])$')
+    prod_config_map = config_map + '-' + product.replace('_', '-').lower()
+
+    if len(prod_config_map) > 253:
+        return ''
+    elif not re.fullmatch(pat, prod_config_map):
+        return ''
+    else:
+        return config_map + '-' + product.replace('_', '-').lower()
