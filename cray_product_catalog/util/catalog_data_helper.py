@@ -62,4 +62,4 @@ def format_product_cm_name(config_map, product):
     elif not re.fullmatch(pat, prod_config_map):
         return ''
     else:
-        return config_map + '-' + product.replace('_', '-').lower()
+        return prod_config_map

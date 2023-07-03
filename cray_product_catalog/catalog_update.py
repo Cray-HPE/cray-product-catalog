@@ -296,6 +296,8 @@ def main():
     # If PRODUCT_CONFIG_MAP is not an empty string and prod_cm_data is not an empty dict
     if PRODUCT_CONFIG_MAP != '' and prod_cm_data:
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    elif PRODUCT_CONFIG_MAP == '':
+        LOGGER.warning("Did not update Product Config Map as provided invalid PRODUCT NAME")
 
 
 if __name__ == "__main__":
