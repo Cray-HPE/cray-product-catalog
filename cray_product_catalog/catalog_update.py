@@ -291,13 +291,15 @@ def main():
     LOGGER.debug("Splitting cray-product-catalog data")
     main_cm_data, prod_cm_data = split_catalog_data(data)
 
+    if prod_cm_data and PRODUCT_CONFIG_MAP == '':
+        LOGGER.error("Not updating config maps as provided Product Name is invalid")
+        raise SystemExit(1)
+
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
     # If PRODUCT_CONFIG_MAP is not an empty string and prod_cm_data is not an empty dict
-    if PRODUCT_CONFIG_MAP != '' and prod_cm_data:
+    if prod_cm_data:
         update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
-    elif PRODUCT_CONFIG_MAP == '':
-        LOGGER.warning("Did not update Product Config Map as provided invalid PRODUCT NAME")
 
 
 if __name__ == "__main__":
