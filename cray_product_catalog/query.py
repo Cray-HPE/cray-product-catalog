@@ -33,6 +33,9 @@ from yaml import safe_load, YAMLError
 
 from cray_product_catalog.constants import (
     COMPONENT_DOCKER_KEY,
+    COMPONENT_HELM,
+    COMPONENT_S3,
+    COMPONENT_MANIFESTS,
     COMPONENT_REPOS_KEY,
     COMPONENT_VERSIONS_PRODUCT_MAP_KEY,
     PRODUCT_CATALOG_CONFIG_MAP_NAME,
@@ -40,6 +43,7 @@ from cray_product_catalog.constants import (
 )
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util import load_k8s
+from cray_product_catalog.util.merge_dict import merge_dict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +52,10 @@ class ProductCatalogError(Exception):
     """An error occurred reading or manipulating product installs."""
     pass
 
+
+class BreakIt(Exception):
+    """This is used to break to outer loop"""
+    pass
 
 class ProductCatalog:
     """A collection of installed product versions.
@@ -91,6 +99,7 @@ class ProductCatalog:
         self.k8s_client = self._get_k8s_api()
         try:
             config_map = self.k8s_client.read_namespaced_config_map(name, namespace)
+            configmaps = self.k8s_client.list_namespaced_config_map(namespace).items
         except MaxRetryError as err:
             raise ProductCatalogError(
                 f'Unable to connect to Kubernetes to read {namespace}/{name} ConfigMap: {err}'
@@ -107,11 +116,37 @@ class ProductCatalog:
             )
 
         try:
-            self.products = [
+            '''self.products = [
                 InstalledProductVersion(product_name, product_version, product_version_data)
                 for product_name, product_versions in config_map.data.items()
                 for product_version, product_version_data in safe_load(product_versions).items()
-            ]
+            ]'''
+            
+            self.products = []
+            search_string = PRODUCT_CATALOG_CONFIG_MAP_NAME + '-'
+
+            for product_name, product_versions in config_map.data.items():
+                for product_version, product_version_data in safe_load(product_versions).items():
+                    prod_cm_found = False
+                    try:
+                        for cm in configmaps:
+                            if (search_string in cm.metadata.name):
+                                for prod_name, prod_versions in cm.data.items():
+                                    if (prod_name == product_name):
+                                        for prod_ver, prod_ver_data in safe_load(prod_versions).items():
+                                            if (product_version == prod_ver):
+                                                p = InstalledProductVersion(product_name, product_version, product_version_data, prod_ver_data)
+                                                self.products.append(p)
+                                                prod_cm_found = True
+                                                raise BreakIt
+                                    else:
+                                        continue
+                    except BreakIt:
+                        pass
+                    if not prod_cm_found:
+                       p = InstalledProductVersion(product_name, product_version, product_version_data)
+                       self.products.append(p)
+
         except YAMLError as err:
             raise ProductCatalogError(
                 f'Failed to load ConfigMap data: {err}'
@@ -181,10 +216,13 @@ class InstalledProductVersion:
             'component_versions' key that will point to the respective
             versions of product components, e.g. Docker images.
     """
-    def __init__(self, name, version, data):
+    def __init__(self, name, version, data, comp_data=None):
         self.name = name
         self.version = version
         self.data = data
+        if comp_data != None:
+            self.data = merge_dict(comp_data, data)
+
 
     def __str__(self):
         return f'{self.name}-{self.version}'
@@ -212,6 +250,35 @@ class InstalledProductVersion:
         """
         return [(component['name'], component['version'])
                 for component in self.component_data.get(COMPONENT_DOCKER_KEY) or []]
+        
+    @property
+    def helm(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return [(component['name'], component['version'])
+                for component in self.component_data.get(COMPONENT_HELM) or []]
+
+    @property
+    def s3_artifacts(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return [(component['bucket'], component['key'])
+                for component in self.component_data.get(COMPONENT_S3) or []]
+
+    @property
+    def loftsman_manifests(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return self.component_data.get(COMPONENT_MANIFESTS, [])
 
     @property
     def repositories(self):
