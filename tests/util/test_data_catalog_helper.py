@@ -215,3 +215,8 @@ def test_format_product_name_invalid_cases():
     product_name = "ola-9" * 60
     config_map = "cm"
     assert format_product_cm_name(config_map, product_name) == ""
+
+    # large name cases
+    product_name = "ola-9" * 60
+    config_map = ""
+    assert format_product_cm_name(config_map, product_name) == ""
