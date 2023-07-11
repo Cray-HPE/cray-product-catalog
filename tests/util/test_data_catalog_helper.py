@@ -25,8 +25,7 @@
 import yaml
 import datetime
 from typing import Dict
-from cray_product_catalog.util.catalog_data_helper import split_catalog_data
-
+from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
 
 # Data for testing
 yaml_data = """
@@ -106,16 +105,17 @@ def test_split_data_sanity():
     }
     prod_cm_data_expected = {
         'component_versions':
-        {
-            'docker': [
-                {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
-                {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update', 'version': '1.3.2'}],
-            'helm': [
-                {'name': 'cray-uan-install', 'version': '1.11.1'}],
-            'repositories': [
-                {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
-            'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
-        }
+            {
+                'docker': [
+                    {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
+                    {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update',
+                     'version': '1.3.2'}],
+                'helm': [
+                    {'name': 'cray-uan-install', 'version': '1.11.1'}],
+                'repositories': [
+                    {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
+                'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
+            }
     }
 
     # yaml raw to py object
@@ -187,3 +187,36 @@ def test_split_missing_main_cm_data():
 
     assert main_cm_data == main_cm_data_expected
     assert prod_cm_data == prod_cm_data_expected
+
+
+def test_format_product_cm_name_sanity():
+    """Unit test case for product name formatting"""
+    product_name = "dummy-valid-1"
+    config_map = "cm"
+    assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
+
+
+def test_format_product_name_transform():
+    """Unit test case for valid product name transformation"""
+    product_name = "23dummy_valid-1.x86"
+    config_map = "cm"
+    assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
+
+
+def test_format_product_name_invalid_cases():
+    """Unit test case for valid product name transformation"""
+
+    # case with special characters
+    product_name = "po90-$_invalid"
+    config_map = "cm"
+    assert format_product_cm_name(config_map, product_name) == ""
+
+    # large name cases
+    product_name = "ola-9" * 60
+    config_map = "cm"
+    assert format_product_cm_name(config_map, product_name) == ""
+
+    # large name cases
+    product_name = "ola-9" * 60
+    config_map = ""
+    assert format_product_cm_name(config_map, product_name) == ""
