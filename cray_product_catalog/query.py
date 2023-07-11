@@ -98,7 +98,6 @@ class ProductCatalog:
         self.namespace = namespace
         self.k8s_client = self._get_k8s_api()
         try:
-            config_map = self.k8s_client.read_namespaced_config_map(name, namespace)
             configmaps = self.k8s_client.list_namespaced_config_map(namespace).items
         except MaxRetryError as err:
             raise ProductCatalogError(
@@ -107,45 +106,32 @@ class ProductCatalog:
         except ApiException as err:
             # The full string representation of ApiException is very long, so just log err.reason.
             raise ProductCatalogError(
-                f'Error reading {namespace}/{name} ConfigMap: {err.reason}'
+                f'Error listing ConfigMaps in {namespace} namespace: {err.reason}'
             )
 
-        if config_map.data is None:
+        if len(configmaps) == 0:
             raise ProductCatalogError(
-                f'No data found in {namespace}/{name} ConfigMap.'
+                f'No ConfigMaps found in {namespace} namespace.'
             )
 
         try:
-            '''self.products = [
-                InstalledProductVersion(product_name, product_version, product_version_data)
-                for product_name, product_versions in config_map.data.items()
-                for product_version, product_version_data in safe_load(product_versions).items()
-            ]'''
-            
-            self.products = []
-            search_string = PRODUCT_CATALOG_CONFIG_MAP_NAME + '-'
+            config_map_data = {}
+            for cm in configmaps:
+                if ('test-cray-product-catalog' in cm.metadata.name):
+                    for product_name, product_versions in cm.data.items():
+                        for product_version, product_version_data in safe_load(product_versions).items():
+                            cm_key = product_name + ':' + product_version
+                            if (cm_key in config_map_data):
+                                config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
+                            else:
+                                config_map_data[cm_key] = product_version_data
 
-            for product_name, product_versions in config_map.data.items():
-                for product_version, product_version_data in safe_load(product_versions).items():
-                    prod_cm_found = False
-                    try:
-                        for cm in configmaps:
-                            if (search_string in cm.metadata.name):
-                                for prod_name, prod_versions in cm.data.items():
-                                    if (prod_name == product_name):
-                                        for prod_ver, prod_ver_data in safe_load(prod_versions).items():
-                                            if (product_version == prod_ver):
-                                                p = InstalledProductVersion(product_name, product_version, product_version_data, prod_ver_data)
-                                                self.products.append(p)
-                                                prod_cm_found = True
-                                                raise BreakIt
-                                    else:
-                                        continue
-                    except BreakIt:
-                        pass
-                    if not prod_cm_found:
-                       p = InstalledProductVersion(product_name, product_version, product_version_data)
-                       self.products.append(p)
+            self.products = []
+
+            for key, product_version_data in config_map_data.items():
+                product_name, product_version = key.split(':')
+                p = InstalledProductVersion(product_name, product_version, product_version_data)
+                self.products.append(p)
 
         except YAMLError as err:
             raise ProductCatalogError(
@@ -216,13 +202,10 @@ class InstalledProductVersion:
             'component_versions' key that will point to the respective
             versions of product components, e.g. Docker images.
     """
-    def __init__(self, name, version, data, comp_data=None):
+    def __init__(self, name, version, data):
         self.name = name
         self.version = version
         self.data = data
-        if comp_data != None:
-            self.data = merge_dict(comp_data, data)
-
 
     def __str__(self):
         return f'{self.name}-{self.version}'
