@@ -53,10 +53,6 @@ class ProductCatalogError(Exception):
     pass
 
 
-class BreakIt(Exception):
-    """This is used to break to outer loop"""
-    pass
-
 class ProductCatalog:
     """A collection of installed product versions.
 
@@ -117,14 +113,15 @@ class ProductCatalog:
         try:
             config_map_data = {}
             for cm in configmaps:
-                if (PRODUCT_CATALOG_CONFIG_MAP_NAME in cm.metadata.name):
-                    for product_name, product_versions in cm.data.items():
-                        for product_version, product_version_data in safe_load(product_versions).items():
-                            cm_key = product_name + ':' + product_version
-                            if (cm_key in config_map_data):
-                                config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
-                            else:
-                                config_map_data[cm_key] = product_version_data
+                if (not cm.metadata.name.startswith(PRODUCT_CATALOG_CONFIG_MAP_NAME)):
+                    continue                
+                for product_name, product_versions in cm.data.items():
+                    for product_version, product_version_data in safe_load(product_versions).items():
+                        cm_key = product_name + ':' + product_version
+                        if (cm_key in config_map_data):
+                            config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
+                        else:
+                            config_map_data[cm_key] = product_version_data
 
             self.products = []
 
