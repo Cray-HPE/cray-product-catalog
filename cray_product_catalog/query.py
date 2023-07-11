@@ -117,7 +117,7 @@ class ProductCatalog:
         try:
             config_map_data = {}
             for cm in configmaps:
-                if ('test-cray-product-catalog' in cm.metadata.name):
+                if (PRODUCT_CATALOG_CONFIG_MAP_NAME in cm.metadata.name):
                     for product_name, product_versions in cm.data.items():
                         for product_version, product_version_data in safe_load(product_versions).items():
                             cm_key = product_name + ':' + product_version
