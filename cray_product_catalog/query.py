@@ -111,25 +111,13 @@ class ProductCatalog:
             )
 
         try:
-            config_map_data = {}
-            for cm in configmaps:
-                if (not cm.metadata.name.startswith(PRODUCT_CATALOG_CONFIG_MAP_NAME)):
-                    continue                
-                for product_name, product_versions in cm.data.items():
-                    for product_version, product_version_data in safe_load(product_versions).items():
-                        cm_key = product_name + ':' + product_version
-                        if (cm_key in config_map_data):
-                            config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
-                        else:
-                            config_map_data[cm_key] = product_version_data
+            '''self.products = [
+                InstalledProductVersion(product_name, product_version, product_version_data)
+                for product_name, product_versions in config_map.data.items()
+                for product_version, product_version_data in safe_load(product_versions).items()
+            ]'''
 
-            self.products = []
-
-            for key, product_version_data in config_map_data.items():
-                product_name, product_version = key.split(':')
-                p = InstalledProductVersion(product_name, product_version, product_version_data)
-                self.products.append(p)
-
+            self.products = loadConfigMapData(configmaps)
         except YAMLError as err:
             raise ProductCatalogError(
                 f'Failed to load ConfigMap data: {err}'
@@ -147,6 +135,7 @@ class ProductCatalog:
         self.products = [
             p for p in self.products if p.is_valid
         ]
+
 
     def get_product(self, name, version=None):
         """Get the InstalledProductVersion matching the given name/version.
@@ -186,6 +175,28 @@ class ProductCatalog:
             )
 
         return matching_products[0]
+
+
+def loadConfigMapData(configmaps):
+    config_map_data = {}
+    for cm in configmaps:
+        if (not cm.metadata.name.startswith(PRODUCT_CATALOG_CONFIG_MAP_NAME)):
+            continue
+        for product_name, product_versions in cm.data.items():
+            for product_version, product_version_data in safe_load(product_versions).items():
+                cm_key = product_name + ':' + product_version
+                if (cm_key in config_map_data):
+                    config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
+                else:
+                    config_map_data[cm_key] = product_version_data
+
+    products = []
+
+    for key, product_version_data in config_map_data.items():
+        product_name, product_version = key.split(':')
+        p = InstalledProductVersion(product_name, product_version, product_version_data)
+        products.append(p)
+    return products
 
 
 class InstalledProductVersion:
