@@ -82,7 +82,7 @@ class TestProductCatalog(unittest.TestCase):
     def create_and_assert_product_catalog(self):
         """Assert the product catalog was created as expected."""
         product_catalog = ProductCatalog('mock-name', 'mock-namespace')
-        self.mock_k8s_api.list_namespaced_config_map.assert_called_once_with('mock-name', 'mock-namespace')
+        self.mock_k8s_api.list_namespaced_config_map.assert_called_once_with('mock-namespace')
         return product_catalog
 
     def test_create_product_catalog(self):
