@@ -112,7 +112,7 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_null_data(self):
         """Test creating a ProductCatalog when the product catalog contains null data."""
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=None)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = []
         with self.assertRaisesRegex(ProductCatalogError,
                                     'No ConfigMaps found in mock-namespace namespace.'):
             self.create_and_assert_product_catalog()
@@ -127,8 +127,7 @@ class TestProductCatalog(unittest.TestCase):
             product_catalog = self.create_and_assert_product_catalog()
 
         self.assertEqual(1, len(logs_cm.records))
-        self.assertEqual('The following products have product catalog data that '
-                         'is not valid against the expected schema: sat-2.1',
+        self.assertEqual('The following products have product catalog data that is not valid against the expected schema: sat-2.1',
                          logs_cm.records[0].message)
         self.assertEqual(product_catalog.products, [])
 
