@@ -94,7 +94,7 @@ class ProductCatalog:
         self.namespace = namespace
         self.k8s_client = self._get_k8s_api()
         try:
-            configmaps = self.k8s_client.list_namespaced_config_map(namespace).items
+            configmaps = self.k8s_client.list_namespaced_config_map(namespace)
         except MaxRetryError as err:
             raise ProductCatalogError(
                 f'Unable to connect to Kubernetes to read {namespace} NameSpace: {err}'
@@ -105,13 +105,13 @@ class ProductCatalog:
                 f'Error listing ConfigMaps in {namespace} NameSpace: {err.reason}'
             )
 
-        if len(configmaps) == 0:
+        if len(configmaps.items()) == 0:
             raise ProductCatalogError(
                 f'No ConfigMaps found in {namespace} NameSpace.'
             )
 
         try:
-            self.products = loadConfigMapData(configmaps)
+            self.products = loadConfigMapData(configmaps.items())
         except YAMLError as err:
             raise ProductCatalogError(
                 f'Failed to load ConfigMap data: {err}'
