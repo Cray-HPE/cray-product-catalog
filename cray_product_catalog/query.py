@@ -98,7 +98,7 @@ class ProductCatalog:
             configmaps = self.k8s_client.list_namespaced_config_map(namespace).items
         except MaxRetryError as err:
             raise ProductCatalogError(
-                f'Unable to connect to Kubernetes to read {namespace}/{name} ConfigMap: {err}'
+                f'Unable to connect to Kubernetes to read {namespace} namespace: {err}'
             ) from err
         except ApiException as err:
             # The full string representation of ApiException is very long, so just log err.reason.

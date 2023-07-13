@@ -76,7 +76,7 @@ class TestProductCatalog(unittest.TestCase):
         """Set up mocks."""
         self.mock_k8s_api = patch.object(ProductCatalog, '_get_k8s_api').start().return_value
         self.mock_product_catalog_data = copy.deepcopy(MOCK_PRODUCT_CATALOG_DATA)
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data=self.mock_product_catalog_data)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=self.mock_product_catalog_data)
 
     def tearDown(self):
         """Stop patches."""
