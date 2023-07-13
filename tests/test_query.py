@@ -112,15 +112,15 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_null_data(self):
         """Test creating a ProductCatalog when the product catalog contains null data."""
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data=None)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=None)
         with self.assertRaisesRegex(ProductCatalogError,
-                                    'No data found in mock-namespace/mock-name ConfigMap.'):
+                                    'No ConfigMaps found in mock-namespace namespace.'):
             self.create_and_assert_product_catalog()
 
     def test_create_product_catalog_invalid_product_schema(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data={
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items={
             'sat': safe_dump({'2.1': {'component_versions': {'docker': 'should be an array'}}})
         })
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
