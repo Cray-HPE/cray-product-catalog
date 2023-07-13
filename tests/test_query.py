@@ -73,7 +73,7 @@ class TestProductCatalog(unittest.TestCase):
         """Set up mocks."""
         self.mock_k8s_api = patch.object(ProductCatalog, '_get_k8s_api').start().return_value
         self.mock_product_catalog_data = copy.deepcopy(MOCK_PRODUCT_CATALOG_DATA)
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data=self.mock_product_catalog_data)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data=self.mock_product_catalog_data)
 
     def tearDown(self):
         """Stop patches."""
@@ -82,7 +82,7 @@ class TestProductCatalog(unittest.TestCase):
     def create_and_assert_product_catalog(self):
         """Assert the product catalog was created as expected."""
         product_catalog = ProductCatalog('mock-name', 'mock-namespace')
-        self.mock_k8s_api.read_namespaced_config_map.assert_called_once_with('mock-name', 'mock-namespace')
+        self.mock_k8s_api.list_namespaced_config_map.assert_called_once_with('mock-name', 'mock-namespace')
         return product_catalog
 
     def test_create_product_catalog(self):
@@ -104,14 +104,14 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_null_data(self):
         """Test creating a ProductCatalog when the product catalog contains null data."""
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data=None)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data=None)
         with self.assertRaisesRegex(ProductCatalogError,
                                     'No data found in mock-namespace/mock-name ConfigMap.'):
             self.create_and_assert_product_catalog()
 
     def test_create_product_catalog_invalid_product_schema(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data={
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(data={
             'sat': safe_dump({'2.1': {'component_versions': {'docker': 'should be an array'}}})
         })
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
