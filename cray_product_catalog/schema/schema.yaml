@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,10 @@ properties:
               oneOf:
                 - $ref: '#/definitions/GroupRepository'
                 - $ref: '#/definitions/HostedRepository'
+          s3:
+            $ref: '#/definitions/S3Repository'
+          manifests:
+            $ref: '#/definitions/LoftsmanManifests'
   configuration:
     description: The data regarding this version's configuration
     type: object
@@ -148,3 +152,25 @@ definitions:
         type: string
         enum:
           - group
+  S3Repository:
+    description: An array of artifact repository.
+    type: array
+    items:
+      required:
+        - bucket
+        - key
+      description: A component with a bucket and key.
+      type: object
+      properties:
+        name:
+          bucket: string
+          description: The bucket name.
+        version:
+          key: string
+          description: The key.
+  LoftsmanManifests:
+    description: An array of Loftsman artifact.
+    type: array
+    items:
+      description: Loftsman artifact.
+      type: string

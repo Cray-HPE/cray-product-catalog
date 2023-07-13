@@ -133,8 +133,9 @@ OTHER_PRODUCT_VERSION = {
 
 
 # A mock version of the data returned when querying the Product Catalog ConfigMap
-MOCK_PRODUCT_CATALOG_DATA = {
+MOCK_PRODUCT_CATALOG_DATA = [{'data':{
     'sat': safe_dump(SAT_VERSIONS),
     'cos': safe_dump(COS_VERSIONS),
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
+}]

@@ -36,6 +36,9 @@ from yaml import safe_load, YAMLError
 
 from cray_product_catalog.constants import (
     COMPONENT_DOCKER_KEY,
+    COMPONENT_HELM,
+    COMPONENT_S3,
+    COMPONENT_MANIFESTS,
     COMPONENT_REPOS_KEY,
     COMPONENT_VERSIONS_PRODUCT_MAP_KEY,
     PRODUCT_CATALOG_CONFIG_MAP_NAME,
@@ -43,6 +46,7 @@ from cray_product_catalog.constants import (
 )
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util import load_k8s
+from cray_product_catalog.util.merge_dict import merge_dict
 
 LOGGER = logging.getLogger(__name__)
 
@@ -91,7 +95,7 @@ class ProductCatalog:
         self.namespace = namespace
         self.k8s_client = self._get_k8s_api()
         try:
-            config_map = self.k8s_client.read_namespaced_config_map(name, namespace)
+            configmaps = self.k8s_client.list_namespaced_config_map(namespace).items
         except MaxRetryError as err:
             raise ProductCatalogError(
                 f'Unable to connect to Kubernetes to read {namespace}/{name} ConfigMap: {err}'
@@ -99,20 +103,16 @@ class ProductCatalog:
         except ApiException as err:
             # The full string representation of ApiException is very long, so just log err.reason.
             raise ProductCatalogError(
-                f'Error reading {namespace}/{name} ConfigMap: {err.reason}'
+                f'Error listing ConfigMaps in {namespace} namespace: {err.reason}'
             ) from err
 
-        if config_map.data is None:
+        if len(configmaps) == 0:
             raise ProductCatalogError(
-                f'No data found in {namespace}/{name} ConfigMap.'
+                f'No ConfigMaps found in {namespace} namespace.'
             )
 
         try:
-            self.products = [
-                InstalledProductVersion(product_name, product_version, product_version_data)
-                for product_name, product_versions in config_map.data.items()
-                for product_version, product_version_data in safe_load(product_versions).items()
-            ]
+            self.products = loadConfigMapData(configmaps)
         except YAMLError as err:
             raise ProductCatalogError(
                 f'Failed to load ConfigMap data: {err}'
@@ -130,6 +130,7 @@ class ProductCatalog:
         self.products = [
             p for p in self.products if p.is_valid
         ]
+
 
     def get_product(self, name, version=None):
         """Get the InstalledProductVersion matching the given name/version.
@@ -169,6 +170,28 @@ class ProductCatalog:
             )
 
         return matching_products[0]
+
+
+def loadConfigMapData(configmaps):
+    config_map_data = {}
+    for cm in configmaps:
+        if (not cm.metadata.name.startswith(PRODUCT_CATALOG_CONFIG_MAP_NAME)):
+            continue
+        for product_name, product_versions in cm.data.items():
+            for product_version, product_version_data in safe_load(product_versions).items():
+                cm_key = product_name + ':' + product_version
+                if (cm_key in config_map_data):
+                    config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
+                else:
+                    config_map_data[cm_key] = product_version_data
+
+    products = []
+
+    for key, product_version_data in config_map_data.items():
+        product_name, product_version = key.split(':')
+        p = InstalledProductVersion(product_name, product_version, product_version_data)
+        products.append(p)
+    return products
 
 
 class InstalledProductVersion:
@@ -213,6 +236,35 @@ class InstalledProductVersion:
         """
         return [(component['name'], component['version'])
                 for component in self.component_data.get(COMPONENT_DOCKER_KEY) or []]
+
+    @property
+    def helm(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return [(component['name'], component['version'])
+                for component in self.component_data.get(COMPONENT_HELM) or []]
+
+    @property
+    def s3_artifacts(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return [(component['bucket'], component['key'])
+                for component in self.component_data.get(COMPONENT_S3) or []]
+
+    @property
+    def loftsman_manifests(self):
+        """Get Docker images associated with this InstalledProductVersion.
+
+        Returns:
+            A list of tuples of (image_name, image_version)
+        """
+        return self.component_data.get(COMPONENT_MANIFESTS, [])
 
     @property
     def repositories(self):
