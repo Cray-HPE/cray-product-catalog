@@ -141,5 +141,6 @@ MOCK_PRODUCT_CATALOG_DATA = {
 }
 
 
-MOCK_PRODUCTS = [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys(),
-                 InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()]
+MOCK_PRODUCTS = \
+    [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys()] + \
+    [InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()]
