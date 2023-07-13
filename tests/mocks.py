@@ -86,6 +86,16 @@ COS_VERSIONS = {
         }
     },
     '2.0.1': {
+        'component_versions': {
+            'docker': [
+                {'name': 'cray/cray-cos', 'version': '1.0.1'},
+                {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
+            ],
+            'repositories': [
+                {'name': 'cos-sle-15sp2', 'type': 'group', 'members': ['cos-2.0.1-sle-15sp2']},
+                {'name': 'cos-2.0.1-sle-15sp2', 'type': 'hosted'}
+            ]
+        },
         "configuration": {
             "clone_url": "https://vcs.machine.dev.cray.com/vcs/cray/cos-config-management.git",
             "commit": "f0b17e13fcf7dd3b896196776e4547fdb98f1da7",
@@ -106,30 +116,6 @@ COS_VERSIONS = {
     },
 }
 
-
-COS_COMP_VERSIONS = {
-    '2.0.0': {
-        'component_versions': {
-            'docker': [
-                {'name': 'cray/cray-cos', 'version': '1.0.0'},
-                {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
-            ]
-        }
-    },
-    '2.0.1': {
-        'component_versions': {
-            'docker': [
-                {'name': 'cray/cray-cos', 'version': '1.0.1'},
-                {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
-            ],
-            'repositories': [
-                {'name': 'cos-sle-15sp2', 'type': 'group', 'members': ['cos-2.0.1-sle-15sp2']},
-                {'name': 'cos-2.0.1-sle-15sp2', 'type': 'hosted'}
-            ]
-        }
-    }
-}
-
 # One version of "Other Product" that also uses cray/cray-sat:1.0.1
 OTHER_PRODUCT_VERSION = {
     '2.0.0': {
@@ -147,23 +133,8 @@ OTHER_PRODUCT_VERSION = {
 
 
 # A mock version of the data returned when querying the Product Catalog ConfigMap
-MOCK_PRODUCT_CATALOG_DATA = [
-    {
-        'metadata': {
-            'name': 'cray-product-catalog'
-        }
-        'data': {
-            'sat': safe_dump(SAT_VERSIONS),
-            'cos': safe_dump(COS_VERSIONS),
-            'other_product': safe_dump(OTHER_PRODUCT_VERSION)
-        }
-    },
-    {
-        'metadata': {
-            'name': 'cray-product-catalog-cos'
-        }
-        'data': {
-            'cos': safe_dump(COS_COMP_VERSIONS),
-        }
-    }
-]
+MOCK_PRODUCT_CATALOG_DATA = {
+    'sat': safe_dump(SAT_VERSIONS),
+    'cos': safe_dump(COS_VERSIONS),
+    'other_product': safe_dump(OTHER_PRODUCT_VERSION)
+}
