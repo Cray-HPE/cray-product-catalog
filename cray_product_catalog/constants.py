@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -27,3 +27,6 @@ PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE = 'services'
 COMPONENT_VERSIONS_PRODUCT_MAP_KEY = 'component_versions'
 COMPONENT_REPOS_KEY = 'repositories'
 COMPONENT_DOCKER_KEY = 'docker'
+COMPONENT_HELM = 'helm'
+COMPONENT_S3 = 's3'
+COMPONENT_MANIFESTS = 'manifests'
