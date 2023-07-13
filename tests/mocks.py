@@ -151,7 +151,6 @@ MOCK_PRODUCT_CATALOG_DATA = [
     {
         'metadata': {
             'name': 'cray-product-catalog'
-            'namespace': 'services'
         }
         'data': {
             'sat': safe_dump(SAT_VERSIONS),
@@ -162,7 +161,6 @@ MOCK_PRODUCT_CATALOG_DATA = [
     {
         'metadata': {
             'name': 'cray-product-catalog-cos'
-            'namespace': 'services'
         }
         'data': {
             'cos': safe_dump(COS_COMP_VERSIONS),
