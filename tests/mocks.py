@@ -27,6 +27,7 @@ Mock data for ProductCatalog and InstalledProductVersion unit tests
 
 from yaml import safe_dump
 
+from cray_product_catalog.query import InstalledProductVersion
 
 # Two versions of a product named SAT where:
 # - The two versions have have no docker images in common with one another.
@@ -138,3 +139,7 @@ MOCK_PRODUCT_CATALOG_DATA = {
     'cos': safe_dump(COS_VERSIONS),
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
+
+
+MOCK_PRODUCTS = [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys(),
+                 InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()]
