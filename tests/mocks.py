@@ -132,6 +132,13 @@ OTHER_PRODUCT_VERSION = {
     }
 }
 
+SAT_INVALID_DATA = {
+    '2.1': {
+        'component_versions': {
+            'docker': 'should be an array',
+        }
+    }
+}
 
 # A mock version of the data returned when querying the Product Catalog ConfigMap
 MOCK_PRODUCT_CATALOG_DATA = {
@@ -146,3 +153,7 @@ MOCK_PRODUCTS = \
     [InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()] + \
     [InstalledProductVersion('other_product', version, OTHER_PRODUCT_VERSION.get(version))
      for version in OTHER_PRODUCT_VERSION.keys()]
+    
+MOCK_INVALID_DATA = [
+    InstalledProductVersion('sat', '2.1'', SAT_INVALID_DATA.get('2.1'))
+]
