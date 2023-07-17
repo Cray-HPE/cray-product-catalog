@@ -104,7 +104,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_invalid_product_data(self):
         """Test creating a ProductCatalog when the product catalog contains invalid YAML."""
-        self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
+        #self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
         self.mock_product_catalog_data['sat'] = '\t'
         with self.assertRaisesRegex(ProductCatalogError, 'Failed to load ConfigMap data'):
             self.create_and_assert_product_catalog()
@@ -119,7 +119,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_invalid_product_schema(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
-        self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
+        #self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items={
             'sat': safe_dump({'2.1': {'component_versions': {'docker': 'should be an array'}}})
         })
@@ -127,8 +127,8 @@ class TestProductCatalog(unittest.TestCase):
             product_catalog = self.create_and_assert_product_catalog()
 
         self.assertEqual(1, len(logs_cm.records))
-        self.assertEqual('The following products have product catalog data that is not valid against the expected schema: sat-2.1',
-                         logs_cm.records[0].message)
+        self.assertEqual('The following products have product catalog data that is not valid against the expected \
+                         schema: sat-2.1', logs_cm.records[0].message)
         self.assertEqual(product_catalog.products, [])
 
     def test_get_matching_product(self):
