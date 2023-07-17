@@ -155,5 +155,5 @@ MOCK_PRODUCTS = \
      for version in OTHER_PRODUCT_VERSION.keys()]
     
 MOCK_INVALID_DATA = [
-    InstalledProductVersion('sat', '2.1'', SAT_INVALID_DATA.get('2.1'))
+    InstalledProductVersion('sat', '2.1', SAT_INVALID_DATA.get('2.1'))
 ]
