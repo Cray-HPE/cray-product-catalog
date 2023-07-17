@@ -39,8 +39,8 @@ from cray_product_catalog.query import (
     ProductCatalogError
 )
 from tests.mocks import (
-    COS_VERSIONS, MOCK_PRODUCT_CATALOG_DATA, 
-    SAT_VERSIONS, MOCK_PRODUCTS, 
+    COS_VERSIONS, MOCK_PRODUCT_CATALOG_DATA,
+    SAT_VERSIONS, MOCK_PRODUCTS,
     MOCK_INVALID_DATA
 )
 

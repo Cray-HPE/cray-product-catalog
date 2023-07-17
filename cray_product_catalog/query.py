@@ -131,7 +131,6 @@ class ProductCatalog:
             p for p in self.products if p.is_valid
         ]
 
-
     def get_product(self, name, version=None):
         """Get the InstalledProductVersion matching the given name/version.
 

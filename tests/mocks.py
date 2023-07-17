@@ -147,13 +147,12 @@ MOCK_PRODUCT_CATALOG_DATA = {
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
 
-
 MOCK_PRODUCTS = \
     [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys()] + \
     [InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()] + \
     [InstalledProductVersion('other_product', version, OTHER_PRODUCT_VERSION.get(version))
      for version in OTHER_PRODUCT_VERSION.keys()]
-    
+
 MOCK_INVALID_DATA = [
     InstalledProductVersion('sat', '2.1', SAT_INVALID_DATA.get('2.1'))
 ]
