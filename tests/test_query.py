@@ -105,7 +105,9 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_invalid_product_data(self):
         """Test creating a ProductCatalog when the product catalog contains invalid YAML."""
         self.mock_loadConfigMapData.return_value = [
-            InstalledProductVersion('sat', '2.1', '\t')
+            InstalledProductVersion('sat', '\t', '\t')
+        ] + [
+            InstalledProductVersion('sat', '\t', '\t')
         ]
         self.mock_product_catalog_data['sat'] = '\t'
         with self.assertRaisesRegex(ProductCatalogError, 'Failed to load ConfigMap data'):
