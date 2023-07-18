@@ -163,7 +163,7 @@ class Name:
         self.name = "cray-product-catalog"
 
 
-class InvalidYaml:
+class MockInvalidYaml:
     def __init__(self):
         self.metadata = Name()
         self.data = {
