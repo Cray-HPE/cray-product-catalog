@@ -31,7 +31,6 @@ import unittest
 from unittest.mock import Mock, patch
 
 from kubernetes.config import ConfigException
-from yaml import safe_dump
 
 from cray_product_catalog.query import (
     ProductCatalog,
@@ -125,7 +124,8 @@ class TestProductCatalog(unittest.TestCase):
         self.mock_load_config_map_data.return_value = [
             InstalledProductVersion('sat', '2.1', MOCK_INVALID_PRODUCT_DATA.get('sat').get('2.1'))
         ]
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[
+            MOCK_INVALID_PRODUCT_DATA.get('sat').get('2.1')])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
 
@@ -141,7 +141,8 @@ class TestProductCatalog(unittest.TestCase):
         self.mock_load_config_map_data.return_value = [
             InstalledProductVersion('cpe', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cpe').get('2.1'))
         ]
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[
+            MOCK_INVALID_PRODUCT_DATA.get('cpe').get('2.1')])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
 
@@ -157,7 +158,8 @@ class TestProductCatalog(unittest.TestCase):
         self.mock_load_config_map_data.return_value = [
             InstalledProductVersion('cos', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cos').get('2.1'))
         ]
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[
+            MOCK_INVALID_PRODUCT_DATA.get('cos').get('2.1')])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
 
