@@ -11,9 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CASM-4427: Implement a prototype to have granular query from main and sub ConfigMap
 - CASM-3981: Add S3 artifacts and loftsman manifests to the Product Catalog Schema
+## [1.8.12] - 2023-07-18
 
 ### Dependencies
 - Bump `google-auth` from 2.21.0 to 2.22.0 (#258)
+- Bump `jsonschema` from 4.18.0 to 4.18.3 (#259, #262)
+- Bump `PyYAML` from 6.0 to 6.0.1 (#264)
+- Pin `pip` version to 23.2 (#264)
+- Pin `setuptools` version to 68.0.0 (#264)
+- Pin `wheel` version to 0.40.0 (#264)
 
 ## [1.8.11] - 2023-07-10
 
@@ -415,7 +421,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.11...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.12...HEAD
+
+[1.8.12]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.11...v1.8.12
 
 [1.8.11]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.10...v1.8.11
 
