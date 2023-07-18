@@ -112,7 +112,7 @@ class ProductCatalog:
             )
 
         try:
-            self.products = loadConfigMapData(configmaps)
+            self.products = load_config_map_data(configmaps)
         except YAMLError as err:
             raise ProductCatalogError(
                 f'Failed to load ConfigMap data: {err}'
@@ -171,7 +171,15 @@ class ProductCatalog:
         return matching_products[0]
 
 
-def loadConfigMapData(configmaps):
+def load_config_map_data(configmaps):
+    """Parse list_namespaced_config_map output and get array of InstalledProductVersion objects
+
+    Args:
+        configmaps (V1ConfigMapList): list of ConfigMap objects
+
+    Returns:
+        An array of InstalledProductVersion object
+    """
     config_map_data = {}
     for cm in configmaps:
         if (not cm.metadata.name.startswith(PRODUCT_CATALOG_CONFIG_MAP_NAME)):

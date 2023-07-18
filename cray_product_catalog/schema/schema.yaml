@@ -58,7 +58,7 @@ properties:
                 - $ref: '#/definitions/GroupRepository'
                 - $ref: '#/definitions/HostedRepository'
           s3:
-            $ref: '#/definitions/S3Repository'
+            $ref: '#/definitions/S3Repositories'
           manifests:
             $ref: '#/definitions/LoftsmanManifests'
   configuration:
@@ -152,8 +152,8 @@ definitions:
         type: string
         enum:
           - group
-  S3Repository:
-    description: An array of artifact repository.
+  S3Repositories:
+    description: An array of artifact repositories.
     type: array
     items:
       required:
@@ -169,8 +169,8 @@ definitions:
           key: string
           description: The key.
   LoftsmanManifests:
-    description: An array of Loftsman artifact.
+    description: An array of Loftsman manifest artifacts.
     type: array
     items:
-      description: Loftsman artifact.
+      description: Loftsman manifest artifact.
       type: string

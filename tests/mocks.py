@@ -75,7 +75,7 @@ SAT_VERSIONS = {
 
 # Two versions of a product named COS where:
 # - The two versions have one docker image name and version in common
-# - The first version has no repositories, configuration, images, or recipes
+# - The first version has docker and manifests but not repositories, configuration, images, or recipes
 # - The second version has repositories, configuration, images, and recipes
 COS_VERSIONS = {
     '2.0.0': {
@@ -83,6 +83,9 @@ COS_VERSIONS = {
             'docker': [
                 {'name': 'cray/cray-cos', 'version': '1.0.0'},
                 {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
+            ],
+            'manifests': [
+                'config-data/argo/loftsman/cos/2.0.0/manifests/cos-services.yaml'
             ]
         }
     },
@@ -117,6 +120,39 @@ COS_VERSIONS = {
     },
 }
 
+# One version of "cpe" product that has repositories, s3, configuration, images and recipes
+CPE_VERSION = {
+    '2.0.0': {
+        'component_versions': {
+            'repositories': [
+                {'name': 'cpe-2.0-sles15-sp4', 'type': 'hosted'},
+                {'name': 'cpe-sles15-sp4', 'type': 'group', 'members': ['cpe-2.0-sles15-sp4']}
+            ],
+            's3': [
+                {'bucket': 'boot-images', 'key': 'PE/CPE-base.x86_64-2.0.squashfs'},
+                {'bucket': 'boot-images', 'key': 'PE/CPE-amd.x86_64-2.0.squashfs'}
+            ]
+        },
+        "configuration": {
+            "clone_url": "https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/cpe-config-management.git",
+            "commit": "cbfa9669ed253499406f268022b0081509036906",
+            "import_branch": "cray/cpe/2.0.0",
+            "import_date": "2023-03-23T12:04:25.210495Z",
+            "ssh_url": "git@vcs.machine.dev.cray.com:cray/cpe-config-management.git"
+        },
+        "images": {
+            "cpe-barebones-sles15sp4.x86_64-2.0.0": {
+                "id": "cf9c87ea-014c-448a-86ac-3ef3e9d2178f"
+            }
+        },
+        "recipes": {
+            "cpe-barebones-sles15sp4.x86_64-2.0.0": {
+                "id": "a30ad9b4-a1ce-4734-bbc1-6de2c1e3781a"
+            }
+        }
+    }
+}
+
 # One version of "Other Product" that also uses cray/cray-sat:1.0.1
 OTHER_PRODUCT_VERSION = {
     '2.0.0': {
@@ -132,10 +168,34 @@ OTHER_PRODUCT_VERSION = {
     }
 }
 
-SAT_INVALID_DATA = {
-    '2.1': {
-        'component_versions': {
-            'docker': 'should be an array',
+# One version of products named 'cos', 'sat' and 'cpe' that has valid YAML but not matching schema
+# - 'cos' product with invalid component manifests
+# - 'sat' product with invalid component docker
+# - 'cpe' product with invalid component s3
+MOCK_INVALID_PRODUCT_DATA = {
+    'cos': {
+        '2.1': {
+            'component_versions': {
+                'manifests': 'should be an array'
+            }
+        }
+    },
+    'sat': {
+        '2.1': {
+            'component_versions': {
+                'docker': [
+                    {'name': 'cray-product-catalog-update'}
+                ]
+            }
+        }
+    },
+    'cpe': {
+        '2.1': {
+            'component_versions': {
+                's3': [
+                    {'bucket':'boot-images'}
+                ]
+            }
         }
     }
 }
@@ -144,27 +204,32 @@ SAT_INVALID_DATA = {
 MOCK_PRODUCT_CATALOG_DATA = {
     'sat': safe_dump(SAT_VERSIONS),
     'cos': safe_dump(COS_VERSIONS),
+    'cpe': safe_dump(CPE_VERSION),
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
 
+# A mock version of the data returned after loading the configmap data
 MOCK_PRODUCTS = \
     [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys()] + \
     [InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()] + \
+    [InstalledProductVersion('cpe', version, CPE_VERSION.get(version)) for version in CPE_VERSION.keys()] + \
     [InstalledProductVersion('other_product', version, OTHER_PRODUCT_VERSION.get(version))
      for version in OTHER_PRODUCT_VERSION.keys()]
 
-MOCK_INVALID_DATA = [
-    InstalledProductVersion('sat', '2.1', SAT_INVALID_DATA.get('2.1'))
-]
-
 
 class Name:
-    def __init__(self) -> None:
+    """Class to hold configmap name."""
+
+    def __init__(self):
+        """Initialize configmap name"""
         self.name = "cray-product-catalog"
 
 
 class MockInvalidYaml:
+    """Mock class created to test test_create_product_catalog_invalid_product_data."""
+
     def __init__(self):
+        """Initialize metadata and data object of configmap data."""
         self.metadata = Name()
         self.data = {
             'sat': '\t',
