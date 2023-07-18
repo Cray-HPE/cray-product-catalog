@@ -183,14 +183,10 @@ def loadConfigMapData(configmaps):
                     config_map_data[cm_key] = merge_dict(config_map_data[cm_key], product_version_data)
                 else:
                     config_map_data[cm_key] = product_version_data
-
-    products = []
-
-    for key, product_version_data in config_map_data.items():
-        product_name, product_version = key.split(':')
-        p = InstalledProductVersion(product_name, product_version, product_version_data)
-        products.append(p)
-    return products
+    return [
+        InstalledProductVersion(key.split(':',)[0], key.split(':')[1], product_version_data)
+        for key, product_version_data in safe_load(config_map_data).items()
+    ]
 
 
 class InstalledProductVersion:

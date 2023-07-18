@@ -41,9 +41,8 @@ from cray_product_catalog.query import (
 from tests.mocks import (
     COS_VERSIONS, MOCK_PRODUCT_CATALOG_DATA,
     SAT_VERSIONS, MOCK_PRODUCTS,
-    MOCK_INVALID_DATA
+    MOCK_INVALID_DATA, InvalidYaml
 )
-
 
 class TestGetK8sAPI(unittest.TestCase):
     """Tests for ProductCatalog.get_k8s_api()."""
@@ -81,7 +80,6 @@ class TestProductCatalog(unittest.TestCase):
         self.mock_k8s_api = patch.object(ProductCatalog, '_get_k8s_api').start().return_value
         self.mock_product_catalog_data = copy.deepcopy(MOCK_PRODUCT_CATALOG_DATA)
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=self.mock_product_catalog_data)
-        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
 
     def tearDown(self):
         """Stop patches."""
@@ -95,6 +93,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog(self):
         """Test creating a simple ProductCatalog."""
+        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_names_and_versions = [
@@ -105,15 +104,16 @@ class TestProductCatalog(unittest.TestCase):
         ]
         self.assertEqual(expected_names_and_versions, actual_names_and_versions)
 
-    '''def test_create_product_catalog_invalid_product_data(self):
+    def test_create_product_catalog_invalid_product_data(self):
         """Test creating a ProductCatalog when the product catalog contains invalid YAML."""
-        self.mock_product_catalog_data['sat'] = '\t'
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[InvalidYaml()])
         with self.assertRaisesRegex(ProductCatalogError, 'Failed to load ConfigMap data'):
-            self.create_and_assert_product_catalog()'''
+            self.create_and_assert_product_catalog()
 
     def test_create_product_catalog_null_data(self):
         """Test creating a ProductCatalog when the product catalog contains null data."""
-        self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
+        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
+        self.mock_loadConfigMapData.return_value = []
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[])
         with self.assertRaisesRegex(ProductCatalogError,
                                     'No ConfigMaps found in mock-namespace namespace.'):
@@ -121,6 +121,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_invalid_product_schema(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
+        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
         self.mock_loadConfigMapData.return_value = MOCK_INVALID_DATA
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[{
             'sat': safe_dump({'2.1': {'component_versions': {'docker': 'should be an array'}}})
@@ -136,6 +137,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_get_matching_product(self):
         """Test getting a particular product by name/version."""
+        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_matching_name_and_version = ('cos', '2.0.0')
@@ -148,6 +150,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_get_latest_matching_product(self):
         """Test getting the latest version of a product"""
+        self.mock_loadConfigMapData = patch('cray_product_catalog.query.loadConfigMapData').start()
         self.mock_loadConfigMapData.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_matching_name_and_version = ('sat', '2.0.1')
