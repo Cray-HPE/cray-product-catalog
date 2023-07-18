@@ -157,6 +157,7 @@ MOCK_INVALID_DATA = [
     InstalledProductVersion('sat', '2.1', SAT_INVALID_DATA.get('2.1'))
 ]
 
+
 class Name:
     def __init__(self) -> None:
         self.name = "cray-product-catalog"

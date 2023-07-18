@@ -41,8 +41,9 @@ from cray_product_catalog.query import (
 from tests.mocks import (
     COS_VERSIONS, MOCK_PRODUCT_CATALOG_DATA,
     SAT_VERSIONS, MOCK_PRODUCTS,
-    MOCK_INVALID_DATA, InvalidYaml
+    MOCK_INVALID_DATA, MockInvalidYaml
 )
+
 
 class TestGetK8sAPI(unittest.TestCase):
     """Tests for ProductCatalog.get_k8s_api()."""
@@ -106,7 +107,7 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_invalid_product_data(self):
         """Test creating a ProductCatalog when the product catalog contains invalid YAML."""
-        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[InvalidYaml()])
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MockInvalidYaml()])
         with self.assertRaisesRegex(ProductCatalogError, 'Failed to load ConfigMap data'):
             self.create_and_assert_product_catalog()
 
