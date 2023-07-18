@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google-auth` from 2.21.0 to 2.22.0 (#258)
 - Bump `jsonschema` from 4.18.0 to 4.18.3 (#259, #262)
 - Temporarily modify [`Dockerfile`](Dockerfile) procedure used to install `PyYAML` and `kubernetes`, to work around https://github.com/yaml/pyyaml/issues/601 (#263)
+- Bump `pyyaml` from 6.0 to 6.0.1 (#264)
 
 ## [1.8.11] - 2023-07-10
 
