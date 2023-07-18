@@ -193,7 +193,7 @@ MOCK_INVALID_PRODUCT_DATA = {
         '2.1': {
             'component_versions': {
                 's3': [
-                    {'bucket':'boot-images'}
+                    {'bucket': 'boot-images'}
                 ]
             }
         }

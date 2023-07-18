@@ -122,7 +122,9 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_invalid_product_schema_for_docker(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
         self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
-        self.mock_load_config_map_data.return_value = [InstalledProductVersion('sat', '2.1', MOCK_INVALID_PRODUCT_DATA.get('sat').get('2.1'))]
+        self.mock_load_config_map_data.return_value = [
+            InstalledProductVersion('sat', '2.1', MOCK_INVALID_PRODUCT_DATA.get('sat').get('2.1'))
+        ]
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
@@ -136,7 +138,9 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_invalid_product_schema_for_s3(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
         self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
-        self.mock_load_config_map_data.return_value = [InstalledProductVersion('cpe', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cpe').get('2.1'))]
+        self.mock_load_config_map_data.return_value = [
+            InstalledProductVersion('cpe', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cpe').get('2.1'))
+        ]
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
@@ -150,7 +154,9 @@ class TestProductCatalog(unittest.TestCase):
     def test_create_product_catalog_invalid_product_schema_for_manifests(self):
         """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
         self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
-        self.mock_load_config_map_data.return_value = [InstalledProductVersion('cos', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cos').get('2.1'))]
+        self.mock_load_config_map_data.return_value = [
+            InstalledProductVersion('cos', '2.1', MOCK_INVALID_PRODUCT_DATA.get('cos').get('2.1'))
+        ]
         self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MOCK_INVALID_PRODUCT_DATA])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
