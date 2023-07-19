@@ -136,7 +136,7 @@ def active_field_exists(product_data):
 
 
 def create_config_map(api_instance, name, namespace):
-    """Create new product ConfigMap."""
+    """Create new product config map."""
     new_cm = V1ConfigMap()
     new_cm.metadata = V1ObjectMeta(name=name)
     api_instance.create_namespaced_config_map(
@@ -182,14 +182,14 @@ def update_config_map(data: dict, name, namespace):
         except ApiException as err:
             LOGGER.exception("Error calling read_namespaced_config_map")
 
-            # ConfigMap doesn't exist yet
+            # Config map doesn't exist yet
             if err.status == ERR_NOT_FOUND:
                 raise   # unrecoverable
             elif name == CONFIG_MAP:
-                # If main ConfigMap is not found wait until it is available
+                # If main config map is not found wait until it is available
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
             else:
-                # If product ConfigMap is not available then create
+                # If product config map is not available then create
                 LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
                 create_config_map(api_instance, name, namespace)
             continue
