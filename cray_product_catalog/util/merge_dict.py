@@ -20,10 +20,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
-
-"""
-Contains a utility function for merging two dictionaries together.
-"""
+# Contains a utility function for merging two dictionaries together.
 
 from copy import deepcopy
 
@@ -39,7 +36,7 @@ def _dict_contains_no_subdicts_or_lists(dict_to_check):
     Returns:
         bool: True if the dict has no dict or list values.
     """
-    return not any(isinstance(value, (dict, list))
+    return not any(isinstance(value, dict) or isinstance(value, list)
                    for value in dict_to_check.values())
 
 
@@ -109,24 +106,23 @@ def _merge_input_with_existing(input_key, input_value, dict_to_update):
     # If adding a new key not in the existing dict, just add it.
     if input_key not in dict_to_update:
         dict_to_update[input_key] = input_value
-        return
-    if _values_are_dicts(dict_to_update[input_key], input_value):
-        # Merging two dicts, use merge_dict() recursively.
-        dict_to_update[input_key] = merge_dict(input_value, dict_to_update[input_key])
-        return
-    if _values_are_lists(dict_to_update[input_key], input_value):
-        # Merging two lists, use extend(). Do not duplicate items.
-        dict_to_update[input_key].extend(
-            [val for val in input_value if val not in dict_to_update[input_key]]
-        )
-        return
-    if _values_are_different_types(input_value, dict_to_update[input_key]):
-        raise TypeError(
-            f'Cannot merge {input_value} (type {type(input_value)}) '
-            f'with {dict_to_update[input_key]} (type {type(dict_to_update[input_key])})'
-        )
-    # Data can't be merged, but should replace old with new.
-    dict_to_update[input_key] = input_value
+    else:
+        if _values_are_dicts(dict_to_update[input_key], input_value):
+            # Merging two dicts, use merge_dict() recursively.
+            dict_to_update[input_key] = merge_dict(input_value, dict_to_update[input_key])
+        elif _values_are_lists(dict_to_update[input_key], input_value):
+            # Merging two lists, use extend(). Do not duplicate items.
+            dict_to_update[input_key].extend(
+                [val for val in input_value if val not in dict_to_update[input_key]]
+            )
+        else:
+            if _values_are_different_types(input_value, dict_to_update[input_key]):
+                raise TypeError(
+                    f'Cannot merge {input_value} (type {type(input_value)}) '
+                    f'with {dict_to_update[input_key]} (type {type(dict_to_update[input_key])})'
+                )
+            # Data can't be merged, but should replace old with new.
+            dict_to_update[input_key] = input_value
 
 
 def merge_dict(input_dict, existing_dict):
@@ -154,8 +150,9 @@ def merge_dict(input_dict, existing_dict):
         dict_to_return.update(input_dict)
         return dict_to_return
 
-    # Recursive case: iterate over keys/values to add and update existing_dict.
-    for input_key, input_value in input_dict.items():
-        _merge_input_with_existing(input_key, input_value, dict_to_return)
+    else:
+        # Recursive case: iterate over keys/values to add and update existing_dict.
+        for input_key, input_value in input_dict.items():
+            _merge_input_with_existing(input_key, input_value, dict_to_return)
 
-    return dict_to_return
+        return dict_to_return

@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -45,10 +45,3 @@ updates:
       - "python-deps"
       - "dependabot"
     open-pull-requests-limit: 3
-    ignore:
-      # Currently there is a limitation we don't want dependabot to keep tripping over. Namely:
-      # kubernetes 26.1.0 depends on urllib3>=1.24.2
-      # google-auth 2.21.0 depends on urllib3<2.0
-      # So we cap urllib3 to be <2.0
-      - dependency-name: "urllib3"
-        versions: [ ">=2.0.0" ]

@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -73,4 +73,4 @@ pymod_test:
 		python3 -m unittest discover tests
 		pycodestyle --config=.pycodestyle cray_product_catalog tests
 		# Run pylint, but only fail the build if the code scores lower than 8.0
-		pylint --fail-under=8.0 --rcfile=.pylintrc cray_product_catalog tests
+		pylint --fail-under=8.0 cray_product_catalog tests

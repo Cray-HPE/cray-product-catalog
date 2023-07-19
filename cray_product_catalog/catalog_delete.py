@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,26 +21,23 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
-"""
-This script takes a PRODUCT and PRODUCT_VERSION and deletes the content
-in a Kubernetes ConfigMap in one of two ways:
-
-If a 'key' is specified within a PRODUCT/PRODUCT_VERSION:
-
-{PRODUCT}:
-  {PRODUCT_VERSION}:
-    {key}        # <- content to delete
-
-If a 'key' is not specified:
-
-{PRODUCT}:
-  {PRODUCT_VERSION}: # <- delete entire version
-
-Since updates to a ConfigMap are not atomic, this script will continue to
-attempt to modify the ConfigMap until it has been patched successfully.
-"""
-
+#
+# This script takes a PRODUCT and PRODUCT_VERSION and deletes the content
+# in a Kubernetes ConfigMap in one of two ways:
+#
+# If a 'key' is specified within a PRODUCT/PRODUCT_VERSION:
+#
+# {PRODUCT}:
+#   {PRODUCT_VERSION}:
+#     {key}        # <- content to delete
+#
+# If a 'key' is not specified:
+#
+# {PRODUCT}:
+#   {PRODUCT_VERSION}: # <- delete entire version
+#
+# Since updates to a configmap are not atomic, this script will continue to
+# attempt to modify the config map until it has been patched successfully.
 import logging
 import os
 import random
@@ -62,16 +59,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 def modify_config_map(name, namespace, product, product_version, key=None):
-    """Remove a product version from the catalog ConfigMap.
+    """Remove a product version from the catalog config map.
 
     If a key is specified, delete the `key` content from a specific section
-    of the catalog ConfigMap. If there are no more keys after it has been
+    of the catalog config map. If there are no more keys after it has been
     removed, remove the version mapping as well.
 
-    1. Wait for the ConfigMap to be present in the namespace
-    2. Patch the ConfigMap
-    3. Read back the ConfigMap
-    4. Repeat steps 2-3 if ConfigMap does not reflect the changes requested
+    1. Wait for the config map to be present in the namespace
+    2. Patch the config_map
+    3. Read back the config_map
+    4. Repeat steps 2-3 if config_map does not reflect the changes requested
     """
     k8sclient = ApiClient()
     retries = 100
@@ -86,28 +83,29 @@ def modify_config_map(name, namespace, product, product_version, key=None):
 
     while True:
 
-        # Wait a while to check the ConfigMap in case multiple products are
-        # attempting to update the same ConfigMap, or the ConfigMap doesn't
+        # Wait a while to check the config map in case multiple products are
+        # attempting to update the same config map, or the config map doesn't
         # exist yet
         attempt += 1
         sleepy_time = random.randint(1, 3)
         LOGGER.info("Resting %ss before reading ConfigMap", sleepy_time)
         time.sleep(sleepy_time)
 
-        # Read in the ConfigMap
+        # Read in the config map
         try:
             response = api_instance.read_namespaced_config_map(name, namespace)
-        except ApiException as err:
+        except ApiException as e:
             LOGGER.exception("Error calling read_namespaced_config_map")
 
-            # ConfigMap doesn't exist yet
-            if err.status == 404 and attempt < max_attempts:
+            # Config map doesn't exist yet
+            if e.status == 404 and attempt < max_attempts:
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
                 continue
-            raise  # unrecoverable
+            else:
+                raise  # unrecoverable
 
         # Determine if ConfigMap needs to be updated
-        config_map_data = response.data or {}  # if no ConfigMap data exists
+        config_map_data = response.data or {}  # if no config map data exists
         if product not in config_map_data:
             break  # product doesn't exist, don't need to remove anything
 
@@ -145,7 +143,7 @@ def modify_config_map(name, namespace, product, product_version, key=None):
             )
             product_data.pop(product_version)
 
-        # Patch the ConfigMap
+        # Patch the config map
         config_map_data[product] = yaml.safe_dump(
             product_data, default_flow_style=False
         )
@@ -160,9 +158,8 @@ def modify_config_map(name, namespace, product, product_version, key=None):
 
 
 def main():
-    """ Main function """
     configure_logging()
-    # Parameters to identify ConfigMap and product/version to remove
+    # Parameters to identify config map and product/version to remove
     PRODUCT = os.environ.get("PRODUCT").strip()  # required
     PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
     CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
@@ -171,7 +168,7 @@ def main():
 
     args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY)
     LOGGER.info(
-        "Removing from ConfigMap=%s in namespace=%s for %s/%s (key=%s)",
+        "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
         *args
     )
     load_k8s()

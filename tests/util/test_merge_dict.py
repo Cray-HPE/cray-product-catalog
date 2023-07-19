@@ -20,10 +20,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
-
-"""
-Unit tests for the cray_product_catalog.util.merge_dict module
-"""
+# Unit tests for the cray_product_catalog.util.merge_dict module
 
 from copy import deepcopy
 import unittest

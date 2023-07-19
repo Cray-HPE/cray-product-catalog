@@ -22,44 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pin `setuptools` version to 68.0.0 (#264)
 - Pin `wheel` version to 0.40.0 (#264)
 
-## [1.8.11] - 2023-07-10
-
-### Changed
-- CASMCMS-8709: Linting of log messages and code comments to remove inconsistencies.
-- CASMCMS-8709: Created `.pylintrc` configuration file for use when running pylint during builds.
-- CASMCMS-8709: Made improvements based on pylint warnings and suggestions (no functional changes).
-
-### Dependencies
-- Bump `charset-normalizer` from 3.1.0 to 3.2.0 (#254)
-
-## [1.8.10] - 2023-07-07
-
-### Changed
-
-- Update `pip` before installing packages in Dockerfile, to avoid image creation
-  failure caused by `pip` building `maturin` from source. (#250)
-
-### Dependencies
-
-- Bump `urllib3` from 1.26.15 to 1.26.16
-- Bump `jsonschema` from 4.17.3 to 4.18.0 (#250)
-
-## [1.8.9] - 2023-07-05
-
-### Added
-
-- Added `UPDATE_OVERWRITE` environment variable to support cases where
-  full control of the products configmap data is required.
-
-### Changed
-
-- dependabot: Bump `requests` from 2.30.0 to 2.31.0
-- dependabot: Bump `google-auth` from 2.17.3 to 2.21.0
-- dependabot: Bump `cachetools` from 5.3.0 to 5.3.1
-- dependabot: Bump `websocket-client` from 1.5.2 to 1.6.1
-- Added `UPDATE_OVERWRITE` environment variable to support cases where
-  full control of the products configmap data is required.
-
 ## [1.8.8] - 2023-05-31
 
 ### Changed
@@ -422,6 +384,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.12...HEAD
 
 [1.8.12]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.11...v1.8.12
@@ -431,6 +394,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.8.10]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.9...v1.8.10
 
 [1.8.9]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.8...v1.8.9
+=======
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.8...HEAD
+>>>>>>> 99422a1... Revert "Merge PR 268"
 
 [1.8.8]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.7...v1.8.8
 

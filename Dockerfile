@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2020-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,6 @@ RUN apk add --upgrade --no-cache apk-tools \
         python3-dev \
         libc-dev \
     && apk -U upgrade --no-cache \
-    && pip3 install --upgrade pip \
     && pip3 install --ignore-installed --no-cache-dir -r requirements.txt \
     && python3 setup.py install \
     && rm -rf /src/
