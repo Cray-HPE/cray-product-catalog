@@ -69,8 +69,12 @@ LOGGER = logging.getLogger(__name__)
 ERR_NOT_FOUND = 404
 ERR_CONFLICT = 409
 
+CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+MAX_RETRIES = 100
+MAX_RETRIES_FOR_PROD_CM = 10
 
-def modify_config_map(name, namespace, product, product_version, max_attempts, key=None):
+
+def modify_config_map(name, namespace, product, product_version, key=None, max_attempts=MAX_RETRIES):
     """Remove a product version from the catalog ConfigMap.
 
     If a key is specified, delete the `key` content from a specific section
@@ -83,7 +87,7 @@ def modify_config_map(name, namespace, product, product_version, max_attempts, k
     4. Repeat steps 2-3 if ConfigMap does not reflect the changes requested
     """
     k8sclient = ApiClient()
-    retries = 100
+    retries = max_attempts
     retry = Retry(
         total=retries, read=retries, connect=retries, backoff_factor=0.3,
         status_forcelist=(500, 502, 503, 504)
@@ -111,12 +115,8 @@ def modify_config_map(name, namespace, product, product_version, max_attempts, k
             # ConfigMap doesn't exist yet
             if err.status != ERR_NOT_FOUND and attempt > max_attempts:
                 raise   # unrecoverable
-            elif attempt == max_attempts and name != CONFIG_MAP:
-                LOGGER.info("ConfigMap %s/%s doesn't exist, so nothing to delete")
-                return
-            else:
-                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
-                continue
+            LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
+            continue
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no ConfigMap data exists
@@ -183,20 +183,17 @@ def main():
     # Parameters to identify ConfigMap and product/version to remove
     PRODUCT = os.environ.get("PRODUCT").strip()  # required
     PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
-    CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
     CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
     PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
     KEY = os.environ.get("KEY", "").strip() or None
-    MAX_RETRIES = 100
-    MAX_RETRIES_FOR_PROD_CM = 10
 
     load_k8s()
 
     if KEY:
         if KEY in CONFIG_MAP_FIELDS:
-            args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES, KEY)
+            args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES)
         elif KEY in PRODUCT_CM_FIELDS:
-            args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES_FOR_PROD_CM, KEY)
+            args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES_FOR_PROD_CM)
         else:
             LOGGER.error(
                 "Invalid KEY=%s is input so exiting...",
@@ -209,14 +206,14 @@ def main():
         )
         modify_config_map(*args)
     else:
-        args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES, KEY)
+        args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES)
         LOGGER.info(
             "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
             *args
         )
         modify_config_map(*args)
 
-        args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, MAX_RETRIES_FOR_PROD_CM, KEY)
+        args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES_FOR_PROD_CM)
         LOGGER.info(
             "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
             *args

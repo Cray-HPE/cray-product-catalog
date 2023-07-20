@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CASM-4368: Delete cray-product-catalog details from main and sub cm for a particular product version
-- Added new argument max_attempts to modify_config_map function in catalog_delete.py as we need not 
-  retry 100 times when read configmap fails for product configmap
+- CASM-4368: Delete Cray Product Catalog details from main and sub ConfigMaps for a particular
+  product version.
+- Added new argument `max_attempts` to `modify_config_map` function in
+  [`catalog_delete.py`](cray_product_catalog/catalog_delete.py), because we need not retry 100
+  times when read ConfigMap fails for a product ConfigMap.
 
 ## [1.8.12] - 2023-07-18
 
