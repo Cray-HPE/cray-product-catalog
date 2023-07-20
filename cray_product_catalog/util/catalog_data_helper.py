@@ -19,8 +19,10 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-#
-# Contains a utility function for merging two dictionaries together.
+
+"""
+Contains a utility function for splitting `cray-product-catalog` data.
+"""
 
 import re
 
@@ -30,36 +32,37 @@ from cray_product_catalog.constants import (
 
 
 def split_catalog_data(data):
-    """Split the passed data into data needed by main and product config map"""
+    """Split the passed data into data needed by main and product ConfigMaps."""
     all_unique_keys = set(data.keys())
     comm_keys_bw_cms = all_unique_keys.intersection(PRODUCT_CM_FIELDS)
 
-    # If fields in PRODUCT_CM_FIELDS is not available in all unique keys return empty dict as second return value
+    # If none of the PRODUCT_CM_FIELDS are available in all_unique_keys, then
+    # return empty dict as second return value
     if not comm_keys_bw_cms:
         return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, {}
-    else:
-        return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
-            {key: data[key] for key in comm_keys_bw_cms}
+    return {key: data[key] for key in all_unique_keys - PRODUCT_CM_FIELDS}, \
+        {key: data[key] for key in comm_keys_bw_cms}
 
 
 def format_product_cm_name(config_map, product):
-    """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key under data in cm.
-    Below are the rules for configmap name. The name of a ConfigMap must be a valid DNS subdomain name.
+    """Formatting PRODUCT_CONFIG_NAME based on the product name passed and the same is used as key
+    under data in the ConfigMap.
+    The name of a ConfigMap must be a valid DNS subdomain name. In addition, it must obey the following rules:
     - contain no more than 253 characters
-    - contain only lowercase alphanumeric characters, '-' or '.'
+    - contain only lowercase alphanumeric characters, hypens('-'), or periods('.')
     - start with an alphanumeric character
     - end with an alphanumeric character
-    Rules for Product name which is a key under the data
-    - must be alphanumeric characters, -, _ or .
-    Since product name can have upper case and '_' which are prohibited in config name,
-    we are converting '_' to '-' and upper case to lower case
+    The product name, which is a key under the data, must obey the following rule:
+    - contain only alphanumeric characters, hyphens ('-'), underscores ('_'), and periods ('.')
+    Because the product name can have uppercase characters and underscores ('_'), which are
+    prohibited in the ConfigMap name, we convert underscores ('_') to hyphens ('-') and uppercase
+    to lowercase.
     """
     pat = re.compile('^([a-z0-9])*[a-z0-9.-]*([a-z0-9])$')
     prod_config_map = config_map + '-' + product.replace('_', '-').lower()
 
     if len(prod_config_map) > 253:
         return ''
-    elif not re.fullmatch(pat, prod_config_map):
+    if not re.fullmatch(pat, prod_config_map):
         return ''
-    else:
-        return prod_config_map
+    return prod_config_map

@@ -90,7 +90,7 @@ yaml_data_missing_main_data = """
 
 
 def test_split_data_sanity():
-    """sanity check of split of yaml into main and prod specific data | +ve test case"""
+    """Sanity check of split of YAML into main and product-specific data | +ve test case"""
 
     # expected data
     main_cm_data_expected = {
@@ -120,7 +120,7 @@ def test_split_data_sanity():
             }
     }
 
-    # yaml raw to py object
+    # YAML raw to Python object
     yaml_object: Dict = yaml.safe_load(yaml_data)
 
     main_cm_data: Dict
@@ -132,7 +132,7 @@ def test_split_data_sanity():
 
 
 def test_split_missing_prod_cm_data():
-    """missing prod cm data check"""
+    """Missing product ConfigMap data check"""
 
     # expected data
     main_cm_data_expected = {
@@ -149,7 +149,7 @@ def test_split_missing_prod_cm_data():
     }
     prod_cm_data_expected = {}
 
-    # yaml raw to py object
+    # YAML raw to Python object
     yaml_object: Dict = yaml.safe_load(yaml_data_missing_prod_cm_data)
 
     main_cm_data: Dict
@@ -161,7 +161,7 @@ def test_split_missing_prod_cm_data():
 
 
 def test_split_missing_main_cm_data():
-    """missing main cm data check"""
+    """Missing main ConfigMap data check"""
 
     # expected data
     main_cm_data_expected = {}
@@ -180,7 +180,7 @@ def test_split_missing_main_cm_data():
             }
     }
 
-    # yaml raw to py object
+    # YAML raw to Python object
     yaml_object: Dict = yaml.safe_load(yaml_data_missing_main_data)
 
     main_cm_data: Dict
@@ -206,19 +206,19 @@ def test_format_product_name_transform():
 
 
 def test_format_product_name_invalid_cases():
-    """Unit test case for valid product name transformation"""
+    """Unit test case for invalid product names"""
 
     # case with special characters
     product_name = "po90-$_invalid"
     config_map = "cm"
     assert format_product_cm_name(config_map, product_name) == ""
 
-    # large name cases
+    # large name with non-blank ConfigMap case
     product_name = "ola-9" * 60
     config_map = "cm"
     assert format_product_cm_name(config_map, product_name) == ""
 
-    # large name cases
+    # large name with blank ConfigMap case
     product_name = "ola-9" * 60
     config_map = ""
     assert format_product_cm_name(config_map, product_name) == ""

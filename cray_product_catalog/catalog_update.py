@@ -186,7 +186,7 @@ def update_config_map(data: dict, name, namespace):
             # ConfigMap doesn't exist yet
             if err.status != ERR_NOT_FOUND:
                 raise   # unrecoverable
-            elif name == CONFIG_MAP:
+            if name == CONFIG_MAP:
                 # If main ConfigMap is not found wait until it is available
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
             else:

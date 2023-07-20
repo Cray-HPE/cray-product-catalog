@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CASM-4350: Resolve 1MB size limitation of K8s Configmap cray-product-catalog by splitting 
-  it's content to store component-versions field in sub/product configmaps
+- CASM-4350: Resolve 1MB size limitation of the `cray-product-catalog` Kubernetes ConfigMap by splitting
+  its content, storing each product's `component_versions` data in its own ConfigMap.
 
 ## [1.8.12] - 2023-07-18
 
