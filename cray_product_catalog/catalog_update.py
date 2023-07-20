@@ -138,12 +138,15 @@ def active_field_exists(product_data):
 
 def create_config_map(api_instance, name, namespace):
     """Create new product ConfigMap."""
-    new_cm = V1ConfigMap()
-    new_cm.metadata = V1ObjectMeta(name=name)
-    api_instance.create_namespaced_config_map(
-        namespace=namespace, body=new_cm
-    )
-    LOGGER.debug("Created product ConfigMap %s/%s", namespace, name)
+    try:
+        new_cm = V1ConfigMap()
+        new_cm.metadata = V1ObjectMeta(name=name)
+        api_instance.create_namespaced_config_map(
+            namespace=namespace, body=new_cm
+        )
+        LOGGER.debug("Created product ConfigMap %s/%s", namespace, name)
+    except ApiException as err:
+        LOGGER.exception("Error calling create_namespaced_config_map")
 
 
 def update_config_map(data: dict, name, namespace):
