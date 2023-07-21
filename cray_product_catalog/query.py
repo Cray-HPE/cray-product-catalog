@@ -172,13 +172,13 @@ class ProductCatalog:
 
 
 def load_config_map_data(configmaps):
-    """Parse list_namespaced_config_map output and get array of InstalledProductVersion objects
+    """Parse list_namespaced_config_map output and get array of InstalledProductVersion objects.
 
     Args:
-        configmaps (V1ConfigMapList): list of ConfigMap objects
+        configmaps (V1ConfigMapList): list of ConfigMap objects.
 
     Returns:
-        An array of InstalledProductVersion object
+        An array of InstalledProductVersion objects.
     """
     config_map_data = {}
     for cm in configmaps:
@@ -193,7 +193,7 @@ def load_config_map_data(configmaps):
                     config_map_data[cm_key] = product_version_data
     return [
         InstalledProductVersion(key.split(':',)[0], key.split(':')[1], product_version_data)
-        for key, product_version_data in safe_load(config_map_data).items()
+        for key, product_version_data in config_map_data.items()
     ]
 
 
@@ -242,7 +242,7 @@ class InstalledProductVersion:
 
     @property
     def helm(self):
-        """Get Docker images associated with this InstalledProductVersion.
+        """Get Helm charts associated with this InstalledProductVersion.
 
         Returns:
             A list of tuples of (image_name, image_version)
@@ -252,7 +252,7 @@ class InstalledProductVersion:
 
     @property
     def s3_artifacts(self):
-        """Get Docker images associated with this InstalledProductVersion.
+        """Get S3 artifacts associated with this InstalledProductVersion.
 
         Returns:
             A list of tuples of (image_name, image_version)
@@ -262,7 +262,7 @@ class InstalledProductVersion:
 
     @property
     def loftsman_manifests(self):
-        """Get Docker images associated with this InstalledProductVersion.
+        """Get Loftsman manifests associated with this InstalledProductVersion.
 
         Returns:
             A list of tuples of (image_name, image_version)

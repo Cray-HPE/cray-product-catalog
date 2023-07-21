@@ -120,7 +120,7 @@ COS_VERSIONS = {
     },
 }
 
-# One version of "cpe" product that has repositories, s3, configuration, images and recipes
+# One version of "cpe" product that has repositories, s3, configuration, images, and recipes
 CPE_VERSION = {
     '2.0.0': {
         'component_versions': {

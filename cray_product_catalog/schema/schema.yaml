@@ -58,7 +58,7 @@ properties:
                 - $ref: '#/definitions/GroupRepository'
                 - $ref: '#/definitions/HostedRepository'
           s3:
-            $ref: '#/definitions/S3Repositories'
+            $ref: '#/definitions/S3Artifacts'
           manifests:
             $ref: '#/definitions/LoftsmanManifests'
   configuration:
@@ -152,7 +152,7 @@ definitions:
         type: string
         enum:
           - group
-  S3Repositories:
+  S3Artifacts:
     description: An array of artifact repositories.
     type: array
     items:
@@ -162,15 +162,18 @@ definitions:
       description: A component with a bucket and key.
       type: object
       properties:
-        name:
-          bucket: string
-          description: The bucket name.
-        version:
-          key: string
-          description: The key.
+        bucket:
+          type: string
+          description: The S3 bucket name.
+          minLength: 1
+        key:
+          type: string
+          description: The key to the artifact in the specified S3 bucket.
+          minLength: 1
   LoftsmanManifests:
     description: An array of Loftsman manifest artifacts.
     type: array
     items:
       description: Loftsman manifest artifact.
       type: string
+      minLength: 1

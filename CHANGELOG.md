@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CASM-4427: Implement a prototype to have granular query from main and sub ConfigMap
-- CASM-3981: Add S3 artifacts and loftsman manifests to the Product Catalog Schema
+- CASM-4427: Implement a prototype to have granular query from main and sub ConfigMaps
+- CASM-3981: Add S3 artifacts and loftsman manifests to the Product Catalog schema
+
 ## [1.8.12] - 2023-07-18
 
 ### Dependencies
