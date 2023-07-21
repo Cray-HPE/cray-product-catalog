@@ -61,17 +61,151 @@ from cray_product_catalog.constants import (
     PRODUCT_CM_FIELDS,
 )
 
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = logging.getLogger(__name__)
 
+# kubernetes API response code
 ERR_NOT_FOUND = 404
 ERR_CONFLICT = 409
 
-CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+# retries
 MAX_RETRIES = 100
 MAX_RETRIES_FOR_PROD_CM = 10
+
+
+class ModifyConfigMapUtil:
+    """Utility class to manage the config map modification
+    """
+
+    def __init__(self):
+        self.__main_cm = None
+        self.__product_cm = None
+        self.__cm_namespace = None
+        self.__product_name = None
+        self.__product_version = None
+        self.__max_reties_for_main_cm = None
+        self.__max_reties_for_prod_cm = None
+        self.__key = None
+        self.__main_cm_fields = None
+        self.__product_cm_fields = None
+
+    # property definitions
+    @property
+    def main_cm(self):
+        return self.__main_cm
+
+    @main_cm.setter
+    def main_cm(self, __main_cm):
+        self.__main_cm = __main_cm
+
+    @property
+    def product_cm(self):
+        return self.__product_cm
+
+    @product_cm.setter
+    def product_cm(self, __product_cm):
+        self.__product_cm = __product_cm
+
+    @property
+    def cm_namespace(self):
+        return self.__cm_namespace
+
+    @cm_namespace.setter
+    def cm_namespace(self, __cm_namespace):
+        self.__cm_namespace = __cm_namespace
+
+    @property
+    def product_name(self):
+        return self.__product_name
+
+    @product_name.setter
+    def product_name(self, __product_name):
+        self.__product_name = __product_name
+
+    @property
+    def product_version(self):
+        return self.__product_version
+
+    @product_version.setter
+    def product_version(self, __product_version):
+        self.__product_version = __product_version
+
+    @property
+    def max_reties_for_main_cm(self):
+        return self.__max_reties_for_main_cm
+
+    @max_reties_for_main_cm.setter
+    def max_reties_for_main_cm(self, __max_reties_for_main_cm):
+        self.__max_reties_for_main_cm = __max_reties_for_main_cm
+
+    @property
+    def max_reties_for_prod_cm(self):
+        return self.__max_reties_for_prod_cm
+
+    @max_reties_for_prod_cm.setter
+    def max_reties_for_prod_cm(self, __max_reties_for_prod_cm):
+        self.__max_reties_for_prod_cm = __max_reties_for_prod_cm
+
+    @property
+    def key(self):
+        return self.__key
+
+    @key.setter
+    def key(self, __key):
+        self.__key = __key
+
+    @property
+    def main_cm_fields(self):
+        return self.__main_cm_fields
+
+    @main_cm_fields.setter
+    def main_cm_fields(self, __main_cm_fields):
+        self.__main_cm_fields = __main_cm_fields
+
+    @property
+    def product_cm_fields(self):
+        return self.__product_cm_fields
+
+    @product_cm_fields.setter
+    def product_cm_fields(self, __product_cm_fields):
+        self.__product_cm_fields = __product_cm_fields
+
+    # private methods
+    def __key_belongs_to_main_cm_fields(self):
+        return self.__key in self.__main_cm_fields
+
+    def __key_belongs_to_prod_cm_fields(self):
+        return self.__key in self.__product_cm_fields
+
+    def __modify_main_cm(self):
+        LOGGER.info(f"Removing from config_map={self.main_cm} in namespace={self.cm_namespace} "
+                    f"for {self.product_name}/{self.product_version} (key={self.key})")
+        modify_config_map(self.__main_cm, self.__cm_namespace, self.__product_name, self.__product_version,
+                          self.__key, self.__max_reties_for_main_cm,)
+
+    def __modify_product_cm(self):
+        LOGGER.info(f"Removing from config_map={self.product_cm} in namespace={self.cm_namespace} "
+                    f"for {self.product_name}/{self.product_version} (key={self.key})")
+        modify_config_map(self.__product_cm, self.__cm_namespace, self.__product_name, self.__product_version,
+                          self.__key, self.__max_reties_for_prod_cm,)
+
+    # public method
+    def modify_config_map(self):
+        if self.__key:
+            if self.__key_belongs_to_main_cm_fields():
+                self.__modify_main_cm()
+
+            elif self.__key_belongs_to_prod_cm_fields():
+                self.__modify_product_cm()
+
+            else:
+                LOGGER.error(f"Invalid KEY={self.key} is input so exiting...")
+                return
+
+        else:
+            self.__modify_main_cm()
+            self.__modify_product_cm()
 
 
 def modify_config_map(name, namespace, product, product_version, key=None, max_attempts=MAX_RETRIES):
@@ -114,7 +248,7 @@ def modify_config_map(name, namespace, product, product_version, key=None, max_a
 
             # ConfigMap doesn't exist yet
             if err.status != ERR_NOT_FOUND and attempt > max_attempts:
-                raise   # unrecoverable
+                raise  # unrecoverable
             LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
             continue
 
@@ -179,46 +313,36 @@ def modify_config_map(name, namespace, product, product_version, key=None, max_a
 
 def main():
     """ Main function """
+
+    # logging configuration
     configure_logging()
+
     # Parameters to identify ConfigMap and product/version to remove
     PRODUCT = os.environ.get("PRODUCT").strip()  # required
     PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
     CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
+    CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
     PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
     KEY = os.environ.get("KEY", "").strip() or None
 
+    # k8 related configurations
     load_k8s()
 
-    if KEY:
-        if KEY in CONFIG_MAP_FIELDS:
-            args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES)
-        elif KEY in PRODUCT_CM_FIELDS:
-            args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES_FOR_PROD_CM)
-        else:
-            LOGGER.error(
-                "Invalid KEY=%s is input so exiting...",
-                KEY
-            )
-            return
-        LOGGER.info(
-            "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
-            *args
-        )
-        modify_config_map(*args)
-    else:
-        args = (CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES)
-        LOGGER.info(
-            "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
-            *args
-        )
-        modify_config_map(*args)
+    # building the utility class
+    modify_config_map_util = ModifyConfigMapUtil()
+    modify_config_map_util.main_cm = CONFIG_MAP
+    modify_config_map_util.product_cm = PRODUCT_CONFIG_MAP
+    modify_config_map_util.cm_namespace = CONFIG_MAP_NS
+    modify_config_map_util.product_name = PRODUCT
+    modify_config_map_util.product_version = PRODUCT_VERSION
+    modify_config_map_util.max_reties_for_main_cm = MAX_RETRIES
+    modify_config_map_util.max_reties_for_prod_cm = MAX_RETRIES_FOR_PROD_CM
+    modify_config_map_util.key = KEY
+    modify_config_map_util.main_cm_fields = CONFIG_MAP_FIELDS
+    modify_config_map_util.product_cm_fields = PRODUCT_CM_FIELDS
 
-        args = (PRODUCT_CONFIG_MAP, CONFIG_MAP_NS, PRODUCT, PRODUCT_VERSION, KEY, MAX_RETRIES_FOR_PROD_CM)
-        LOGGER.info(
-            "Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
-            *args
-        )
-        modify_config_map(*args)
+    # config map modifying logic initiation
+    modify_config_map_util.modify_config_map()
 
 
 if __name__ == "__main__":
