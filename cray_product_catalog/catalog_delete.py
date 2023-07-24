@@ -179,19 +179,33 @@ class ModifyConfigMapUtil:
         return self.__key in self.__product_cm_fields
 
     def __modify_main_cm(self):
-        LOGGER.info(f"Removing from config_map={self.main_cm} in namespace={self.cm_namespace} "
-                    f"for {self.product_name}/{self.product_version} (key={self.key})")
+        LOGGER.info("Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
+                    self.main_cm, self.cm_namespace, self.product_name, self.product_version, self.key)
         modify_config_map(self.__main_cm, self.__cm_namespace, self.__product_name, self.__product_version,
                           self.__key, self.__max_reties_for_main_cm,)
 
     def __modify_product_cm(self):
-        LOGGER.info(f"Removing from config_map={self.product_cm} in namespace={self.cm_namespace} "
-                    f"for {self.product_name}/{self.product_version} (key={self.key})")
+        LOGGER.info("Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
+                    self.product_cm, self.cm_namespace, self.product_name, self.product_version, self.key)
         modify_config_map(self.__product_cm, self.__cm_namespace, self.__product_name, self.__product_version,
                           self.__key, self.__max_reties_for_prod_cm,)
 
     # public method
     def modify_config_map(self):
+        """
+        Method to initiate modification of ConfigMaps.
+        Before executing this method make sure to set these properties of the class:
+        *    main_cm # name of main ConfigMap
+        *    product_cm # name of product specific CofigMap
+        *    cm_namespace  # Namespace containing all config map
+        *    product_name  # Product name
+        *    product_version  # Product version
+        *    max_reties_for_main_cm  # Max failure retries for main ConfigMap
+        *    max_reties_for_prod_cm  # Max failure retries for product ConfigMap
+        *    key  # Key to delete, if you want to execute complete product or a particular version, ignore it
+        *    main_cm_fields  # Fields present in main ConfigMap
+        *    product_cm_fields  # Fields present in product specific ConfigMap
+        """
         if self.__key:
             if self.__key_belongs_to_main_cm_fields():
                 self.__modify_main_cm()
@@ -200,12 +214,12 @@ class ModifyConfigMapUtil:
                 self.__modify_product_cm()
 
             else:
-                LOGGER.error(f"Invalid KEY={self.key} is input so exiting...")
-                return
+                LOGGER.error("Invalid KEY=%s is input so exiting...", self.key)
 
-        else:
-            self.__modify_main_cm()
-            self.__modify_product_cm()
+            return
+
+        self.__modify_main_cm()
+        self.__modify_product_cm()
 
 
 def modify_config_map(name, namespace, product, product_version, key=None, max_attempts=MAX_RETRIES):
@@ -341,7 +355,7 @@ def main():
     modify_config_map_util.main_cm_fields = CONFIG_MAP_FIELDS
     modify_config_map_util.product_cm_fields = PRODUCT_CM_FIELDS
 
-    # config map modifying logic initiation
+    # ConfigMap modifying logic initiation
     modify_config_map_util.modify_config_map()
 
 
