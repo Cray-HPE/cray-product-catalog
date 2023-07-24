@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -84,8 +84,8 @@ class ModifyConfigMapUtil:
         self.__cm_namespace = None
         self.__product_name = None
         self.__product_version = None
-        self.__max_reties_for_main_cm = None
-        self.__max_reties_for_prod_cm = None
+        self.__max_retries_for_main_cm = None
+        self.__max_retries_for_prod_cm = None
         self.__key = None
         self.__main_cm_fields = None
         self.__product_cm_fields = None
@@ -132,20 +132,20 @@ class ModifyConfigMapUtil:
         self.__product_version = __product_version
 
     @property
-    def max_reties_for_main_cm(self):
-        return self.__max_reties_for_main_cm
+    def max_retries_for_main_cm(self):
+        return self.__max_retries_for_main_cm
 
-    @max_reties_for_main_cm.setter
-    def max_reties_for_main_cm(self, __max_reties_for_main_cm):
-        self.__max_reties_for_main_cm = __max_reties_for_main_cm
+    @max_retries_for_main_cm.setter
+    def max_retries_for_main_cm(self, __max_reties_for_main_cm):
+        self.__max_retries_for_main_cm = __max_reties_for_main_cm
 
     @property
-    def max_reties_for_prod_cm(self):
-        return self.__max_reties_for_prod_cm
+    def max_retries_for_prod_cm(self):
+        return self.__max_retries_for_prod_cm
 
-    @max_reties_for_prod_cm.setter
-    def max_reties_for_prod_cm(self, __max_reties_for_prod_cm):
-        self.__max_reties_for_prod_cm = __max_reties_for_prod_cm
+    @max_retries_for_prod_cm.setter
+    def max_retries_for_prod_cm(self, __max_reties_for_prod_cm):
+        self.__max_retries_for_prod_cm = __max_reties_for_prod_cm
 
     @property
     def key(self):
@@ -182,16 +182,16 @@ class ModifyConfigMapUtil:
         LOGGER.info("Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
                     self.main_cm, self.cm_namespace, self.product_name, self.product_version, self.key)
         modify_config_map(self.__main_cm, self.__cm_namespace, self.__product_name, self.__product_version,
-                          self.__key, self.__max_reties_for_main_cm,)
+                          self.__key, self.__max_retries_for_main_cm, )
 
     def __modify_product_cm(self):
         LOGGER.info("Removing from config_map=%s in namespace=%s for %s/%s (key=%s)",
                     self.product_cm, self.cm_namespace, self.product_name, self.product_version, self.key)
         modify_config_map(self.__product_cm, self.__cm_namespace, self.__product_name, self.__product_version,
-                          self.__key, self.__max_reties_for_prod_cm,)
+                          self.__key, self.__max_retries_for_prod_cm, )
 
     # public method
-    def modify_config_map(self):
+    def modify(self):
         """
         Method to initiate modification of ConfigMaps.
         Before executing this method make sure to set these properties of the class:
@@ -214,7 +214,7 @@ class ModifyConfigMapUtil:
                 self.__modify_product_cm()
 
             else:
-                LOGGER.error("Invalid KEY=%s is input so exiting...", self.key)
+                LOGGER.warning("key=%s NOT present in Main/Product ConfigMap, exiting", self.key)
 
             return
 
@@ -349,14 +349,14 @@ def main():
     modify_config_map_util.cm_namespace = CONFIG_MAP_NS
     modify_config_map_util.product_name = PRODUCT
     modify_config_map_util.product_version = PRODUCT_VERSION
-    modify_config_map_util.max_reties_for_main_cm = MAX_RETRIES
-    modify_config_map_util.max_reties_for_prod_cm = MAX_RETRIES_FOR_PROD_CM
+    modify_config_map_util.max_retries_for_main_cm = MAX_RETRIES
+    modify_config_map_util.max_retries_for_prod_cm = MAX_RETRIES_FOR_PROD_CM
     modify_config_map_util.key = KEY
     modify_config_map_util.main_cm_fields = CONFIG_MAP_FIELDS
     modify_config_map_util.product_cm_fields = PRODUCT_CM_FIELDS
 
-    # ConfigMap modifying logic initiation
-    modify_config_map_util.modify_config_map()
+    # Modifying ConfigMap
+    modify_config_map_util.modify()
 
 
 if __name__ == "__main__":

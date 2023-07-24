@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -41,8 +41,8 @@ class TestModifyConfigMapUtil(unittest.TestCase):
         self.modify_config_map_util.cm_namespace = "cm_namespace"
         self.modify_config_map_util.product_name = "product_name"
         self.modify_config_map_util.product_version = "product_version"
-        self.modify_config_map_util.max_reties_for_main_cm = 100
-        self.modify_config_map_util.max_reties_for_prod_cm = 10
+        self.modify_config_map_util.max_retries_for_main_cm = 100
+        self.modify_config_map_util.max_retries_for_prod_cm = 10
         self.modify_config_map_util.key = "key"
         self.modify_config_map_util.main_cm_fields = ["main_a", "main_b", "main_c"]
         self.modify_config_map_util.product_cm_fields = ["prod_1", "prod_2", "prod_3"]
@@ -58,8 +58,8 @@ class TestModifyConfigMapUtil(unittest.TestCase):
         mcmu.cm_namespace = "3"
         mcmu.product_name = "4"
         mcmu.product_version = "5"
-        mcmu.max_reties_for_main_cm = "6"
-        mcmu.max_reties_for_prod_cm = "6.1"
+        mcmu.max_retries_for_main_cm = "6"
+        mcmu.max_retries_for_prod_cm = "6.1"
         mcmu.key = "7"
         mcmu.main_cm_fields = ["8", "9", "10"]
         mcmu.product_cm_fields = ["11", "12", "13"]
@@ -69,8 +69,8 @@ class TestModifyConfigMapUtil(unittest.TestCase):
         self.assertEqual(mcmu.cm_namespace, "3")
         self.assertEqual(mcmu.product_name, "4")
         self.assertEqual(mcmu.product_version, "5")
-        self.assertEqual(mcmu.max_reties_for_main_cm, "6")
-        self.assertEqual(mcmu.max_reties_for_prod_cm, "6.1")
+        self.assertEqual(mcmu.max_retries_for_main_cm, "6")
+        self.assertEqual(mcmu.max_retries_for_prod_cm, "6.1")
         self.assertEqual(mcmu.key, "7")
         self.assertEqual(mcmu.main_cm_fields, ["8", "9", "10"])
         self.assertEqual(mcmu.product_cm_fields, ["11", "12", "13"])
@@ -80,7 +80,7 @@ class TestModifyConfigMapUtil(unittest.TestCase):
     def test_delete_from_both_config_map(self):
         """Test cases to assert delete calls into both main and product ConfigMap"""
         self.modify_config_map_util.key = None
-        self.modify_config_map_util.modify_config_map()
+        self.modify_config_map_util.modify()
 
         self.mock_modify_config_map.assert_has_calls(
             calls=[
@@ -90,7 +90,7 @@ class TestModifyConfigMapUtil(unittest.TestCase):
                      self.modify_config_map_util.product_name,
                      self.modify_config_map_util.product_version,
                      self.modify_config_map_util.key,
-                     self.modify_config_map_util.max_reties_for_main_cm,
+                     self.modify_config_map_util.max_retries_for_main_cm,
                      ),
                 # product ConfigMap call
                 call(self.modify_config_map_util.product_cm,
@@ -98,14 +98,14 @@ class TestModifyConfigMapUtil(unittest.TestCase):
                      self.modify_config_map_util.product_name,
                      self.modify_config_map_util.product_version,
                      self.modify_config_map_util.key,
-                     self.modify_config_map_util.max_reties_for_prod_cm,
+                     self.modify_config_map_util.max_retries_for_prod_cm,
                      )]
         )
 
     def test_delete_from_main_config_map(self):
         """Test cases to assert delete calls into main ConfigMap"""
         self.modify_config_map_util.key = "main_a"
-        self.modify_config_map_util.modify_config_map()
+        self.modify_config_map_util.modify()
 
         self.mock_modify_config_map.assert_called_once_with(
             self.modify_config_map_util.main_cm,
@@ -113,13 +113,13 @@ class TestModifyConfigMapUtil(unittest.TestCase):
             self.modify_config_map_util.product_name,
             self.modify_config_map_util.product_version,
             self.modify_config_map_util.key,
-            self.modify_config_map_util.max_reties_for_main_cm,
+            self.modify_config_map_util.max_retries_for_main_cm,
         )
 
     def test_delete_from_product_config_map(self):
         """Test cases to assert delete calls into product ConfigMap"""
         self.modify_config_map_util.key = "prod_3"
-        self.modify_config_map_util.modify_config_map()
+        self.modify_config_map_util.modify()
 
         self.mock_modify_config_map.assert_called_once_with(
             self.modify_config_map_util.product_cm,
@@ -127,15 +127,15 @@ class TestModifyConfigMapUtil(unittest.TestCase):
             self.modify_config_map_util.product_name,
             self.modify_config_map_util.product_version,
             self.modify_config_map_util.key,
-            self.modify_config_map_util.max_reties_for_prod_cm,
+            self.modify_config_map_util.max_retries_for_prod_cm,
         )
 
     def test_invalid_key(self):
         """Test cases to assert invalid key"""
         self.modify_config_map_util.key = "invalid string key"
-        self.modify_config_map_util.modify_config_map()
+        self.modify_config_map_util.modify()
         self.mock_modify_config_map.assert_not_called()
 
         self.modify_config_map_util.key = 909  # non string is invalid as well
-        self.modify_config_map_util.modify_config_map()
+        self.modify_config_map_util.modify()
         self.mock_modify_config_map.assert_not_called()
