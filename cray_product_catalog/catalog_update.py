@@ -170,7 +170,7 @@ def update_config_map(data: dict, name, namespace):
     api_instance = client.CoreV1Api(k8sclient)
     attempt = 0
 
-    while True:
+    while attempt < retries:
 
         # Wait a while to check the ConfigMap in case multiple products are
         # attempting to update the same ConfigMap, or the ConfigMap doesn't
