@@ -292,7 +292,7 @@ class TestInstalledProductVersion(unittest.TestCase):
     def test_helm_charts(self):
         """Test getting the Helm charts."""
         expected_helm_charts_versions = [
-            ('cos-config', '0.4.76'), 
+            ('cos-config', '0.4.76'),
             ('cos-sle15sp3-artifacts', '1.3.23'),
             ('cray-cps', '1.8.15')
         ]
