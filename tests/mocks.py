@@ -95,6 +95,11 @@ COS_VERSIONS = {
                 {'name': 'cray/cray-cos', 'version': '1.0.1'},
                 {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
             ],
+            'helm': [
+                {'name': 'cos-config', 'version': '0.4.76'},
+                {'name': 'cos-sle15sp3-artifacts', 'version': '1.3.23'},
+                {'name': 'cray-cps', 'version': '1.8.15'}
+            ],
             'repositories': [
                 {'name': 'cos-sle-15sp2', 'type': 'group', 'members': ['cos-2.0.1-sle-15sp2']},
                 {'name': 'cos-2.0.1-sle-15sp2', 'type': 'hosted'}
@@ -168,7 +173,7 @@ OTHER_PRODUCT_VERSION = {
     }
 }
 
-# One version of products named 'cos', 'sat' and 'cpe' that has valid YAML but not matching schema
+# Multiple versions of products named 'cos', 'sat', and 'cpe' that has valid YAML but not matching schema
 # - 'cos' product with invalid component manifests
 # - 'sat' product with invalid component docker
 # - 'cpe' product with invalid component s3
@@ -178,13 +183,35 @@ MOCK_INVALID_PRODUCT_DATA = {
             'component_versions': {
                 'manifests': 'should be an array'
             }
+        },
+        '2.2': {
+            'component_versions': {
+                'manifests': [ 111, 222 ]   # should be an array of string
+            }
+        },
+        '2.3': {
+            'component_versions': {
+                'manifests': ['']   # should not be an empty string
+            }
         }
     },
     'sat': {
         '2.1': {
             'component_versions': {
+                'docker': 'should be an array'
+            }
+        },
+        '2.2': {
+            'component_versions': {
                 'docker': [
-                    {'name': 'cray-product-catalog-update'}
+                    {'name': 'cray/cray-sat'} # Missiing field `version`
+                ]
+            }
+        },
+        '2.3': {
+            'component_versions': {
+                'docker': [
+                    {'version': '1.0.1'} # Missing  field `name`
                 ]
             }
         }
@@ -192,8 +219,34 @@ MOCK_INVALID_PRODUCT_DATA = {
     'cpe': {
         '2.1': {
             'component_versions': {
+                's3': 'should be an array'
+            }
+        },
+        '2.2': {
+            'component_versions': {
                 's3': [
-                    {'bucket': 'boot-images'}
+                    {'bucket': 'boot-images'} # Missing field `key`
+                ]
+            }
+        },
+        '2.3': {
+            'component_versions': {
+                's3': [
+                    {'key': 'PE/CPE-base.x86_64-2.0.squashfs'} # Missing field `bucket`
+                ]
+            }
+        },
+        '2.4': {
+            'component_versions': {
+                's3': [
+                    {'bucket': 'boot-images', 'key': ''} # Empty field `key`
+                ]
+            }
+        },
+        '2.5': {
+            'component_versions': {
+                's3': [
+                    {'bucket': '', 'key': 'PE/CPE-base.x86_64-2.0.squashfs'} # Empty field `bucket`
                 ]
             }
         }
@@ -208,7 +261,7 @@ MOCK_PRODUCT_CATALOG_DATA = {
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
 
-# A mock version of the data returned after loading the configmap data
+# A mock version of the data returned after loading the ConfigMap data
 MOCK_PRODUCTS = \
     [InstalledProductVersion('sat', version, SAT_VERSIONS.get(version)) for version in SAT_VERSIONS.keys()] + \
     [InstalledProductVersion('cos', version, COS_VERSIONS.get(version)) for version in COS_VERSIONS.keys()] + \
@@ -218,10 +271,10 @@ MOCK_PRODUCTS = \
 
 
 class Name:
-    """Class to hold configmap name."""
+    """Class to hold ConfigMap name."""
 
     def __init__(self):
-        """Initialize configmap name"""
+        """Initialize ConfigMap name"""
         self.name = "cray-product-catalog"
 
 
@@ -229,7 +282,7 @@ class MockInvalidYaml:
     """Mock class created to test test_create_product_catalog_invalid_product_data."""
 
     def __init__(self):
-        """Initialize metadata and data object of configmap data."""
+        """Initialize metadata and data object of ConfigMap data."""
         self.metadata = Name()
         self.data = {
             'sat': '\t',
