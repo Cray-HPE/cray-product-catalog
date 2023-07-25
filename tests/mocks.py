@@ -186,7 +186,7 @@ MOCK_INVALID_PRODUCT_DATA = {
         },
         '2.2': {
             'component_versions': {
-                'manifests': [ 111, 222 ]   # should be an array of string
+                'manifests': [111, 222]     # should be an array of string
             }
         },
         '2.3': {
@@ -204,14 +204,14 @@ MOCK_INVALID_PRODUCT_DATA = {
         '2.2': {
             'component_versions': {
                 'docker': [
-                    {'name': 'cray/cray-sat'} # Missiing field `version`
+                    {'name': 'cray/cray-sat'}   # Missiing field `version`
                 ]
             }
         },
         '2.3': {
             'component_versions': {
                 'docker': [
-                    {'version': '1.0.1'} # Missing  field `name`
+                    {'version': '1.0.1'}    # Missing  field `name`
                 ]
             }
         }
@@ -225,28 +225,28 @@ MOCK_INVALID_PRODUCT_DATA = {
         '2.2': {
             'component_versions': {
                 's3': [
-                    {'bucket': 'boot-images'} # Missing field `key`
+                    {'bucket': 'boot-images'}   # Missing field `key`
                 ]
             }
         },
         '2.3': {
             'component_versions': {
                 's3': [
-                    {'key': 'PE/CPE-base.x86_64-2.0.squashfs'} # Missing field `bucket`
+                    {'key': 'PE/CPE-base.x86_64-2.0.squashfs'}    # Missing field `bucket`
                 ]
             }
         },
         '2.4': {
             'component_versions': {
                 's3': [
-                    {'bucket': 'boot-images', 'key': ''} # Empty field `key`
+                    {'bucket': 'boot-images', 'key': ''}    # Empty field `key`
                 ]
             }
         },
         '2.5': {
             'component_versions': {
                 's3': [
-                    {'bucket': '', 'key': 'PE/CPE-base.x86_64-2.0.squashfs'} # Empty field `bucket`
+                    {'bucket': '', 'key': 'PE/CPE-base.x86_64-2.0.squashfs'}    # Empty field `bucket`
                 ]
             }
         }

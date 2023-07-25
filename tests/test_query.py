@@ -136,7 +136,7 @@ class TestProductCatalog(unittest.TestCase):
 
         self.assertEqual(1, len(logs_cm.records))
         message = 'The following products have product catalog data that ' + \
-        'is not valid against the expected schema: '+ prod+ '-'+ ver
+            'is not valid against the expected schema: ' + prod + '-' + ver
         self.assertEqual(message, logs_cm.records[0].message)
         self.assertEqual(product_catalog.products, [])
 
@@ -291,8 +291,11 @@ class TestInstalledProductVersion(unittest.TestCase):
 
     def test_helm_charts(self):
         """Test getting the Helm charts."""
-        expected_helm_charts_versions = [('cos-config', '0.4.76'), ('cos-sle15sp3-artifacts', '1.3.23'),
-                                          ('cray-cps', '1.8.15')]
+        expected_helm_charts_versions = [
+            ('cos-config', '0.4.76'), 
+            ('cos-sle15sp3-artifacts', '1.3.23'),
+            ('cray-cps', '1.8.15')
+        ]
         self.assertEqual(
             expected_helm_charts_versions, self.installed_product_version.helm
         )
