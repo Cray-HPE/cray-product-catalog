@@ -217,7 +217,7 @@ PROD_CM_DATA = {
     {
         'docker': [
             {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
-            {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update','version': '1.3.2'}
+            {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update', 'version': '1.3.2'}
         ],
         'helm': [
             {'name': 'cray-uan-install', 'version': '1.11.1'}
