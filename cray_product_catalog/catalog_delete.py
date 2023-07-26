@@ -113,10 +113,10 @@ def modify_config_map(name, namespace, product, product_version, key=None, max_a
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # ConfigMap doesn't exist yet
-            if err.status != ERR_NOT_FOUND and attempt > max_attempts:
-                raise   # unrecoverable
-            LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
-            continue
+            if err.status == ERR_NOT_FOUND and attempt < max_attempts:
+                LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
+                continue
+            raise  # unrecoverable
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no ConfigMap data exists
