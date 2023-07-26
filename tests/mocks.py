@@ -138,3 +138,175 @@ MOCK_PRODUCT_CATALOG_DATA = {
     'cos': safe_dump(COS_VERSIONS),
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
+
+###################### Helper Classes for catalog_update: Start ##########################
+from kubernetes.client.rest import ApiException
+
+UPDATE_DATA = {
+    '2.0.0': {
+        'component_versions': {
+            'docker': [
+                {'name': 'cray/cray-cos', 'version': '1.0.0'},
+                {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
+            ]
+        }
+    }
+}
+
+class Name:
+    """
+    Class to provide dummy metadata object with name and resource_version
+    """
+    def __init__(self):
+        self.name = 'cray-product-catalog'
+        self.resource_version = 1
+
+
+class Response:
+    """
+    Class to generate response for k8s api call api_instance.read_namespaced_config_map(name, namespace)
+    """
+    def __init__(self):
+        self.data = COS_VERSIONS
+        self.metadata = Name()
+
+
+ERR_NOT_FOUND = 404
+
+
+class ApiException(ApiException):
+    """
+    Custom Exception to define status
+    """
+    def __init__(self):
+        self.status = ERR_NOT_FOUND
+
+
+class ApiInstance():
+    """
+    Class to raise custom exception and ignore function calls
+    """
+    def __init__(self, raise_exception=False):
+        self.raise_exception = raise_exception
+        self.count = 0
+
+    def create_namespaced_config_map(self, namespace='a', body='b'):
+        """
+        Dummy Function to raise exception, if needed
+        """
+        if self.raise_exception:
+            raise ApiException()
+        else:
+            pass
+
+    def read_namespaced_config_map(self, name, namespace):
+        """
+        Dummy Function to :
+        1. Raise exception
+        2. generate and return proper response with data and metadata
+        """
+        # if this is called for first time return exception, so that product cm is created.
+        if self.count == 0:
+            self.count += 1
+            raise ApiException()
+        else :
+            return Response()
+
+
+    def patch_namespaced_config_map(self, name, namespace, body='xxx'):
+        """
+        Dummy function to handle the call in code, does nothing
+        """
+        pass
+
+###################### Helper Classes for catalog_update: End ##########################
+###################### Helper variables for catalog_data_helper: Start ##########################
+import datetime
+
+YAML_DATA = """
+  active: false
+  component_versions:
+    docker:
+    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
+      version: 1.11.1
+    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
+      version: 1.3.2
+    helm:
+    - name: cray-uan-install
+      version: 1.11.1
+    repositories:
+    - members:
+      - uan-2.6.0-sle-15sp4
+      name: uan-2.6-sle-15sp4
+      type: group
+    manifests:
+    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml
+  configuration:
+    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
+    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
+    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
+    import_date: 2023-04-12 14:31:40.364230
+    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
+    images:
+      cray-application-sles15sp4.x86_64-0.5.19:
+        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
+
+YAML_DATA_MISSING_PROD_CM_DATA = """
+  active: false
+  configuration:
+    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
+    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
+    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
+    import_date: 2023-04-12 14:31:40.364230
+    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
+    images:
+      cray-application-sles15sp4.x86_64-0.5.19:
+        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
+
+YAML_DATA_MISSING_MAIN_DATA = """
+  component_versions:
+    docker:
+    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
+      version: 1.11.1
+    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
+      version: 1.3.2
+    helm:
+    - name: cray-uan-install
+      version: 1.11.1
+    repositories:
+    - members:
+      - uan-2.6.0-sle-15sp4
+      name: uan-2.6-sle-15sp4
+      type: group
+    manifests:
+    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml"""
+
+MAIN_CM_DATA = {
+    'active': False,
+    'configuration':
+    {
+        'clone_url': 'https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git',
+        'commit': '6a5f52dfbfe7ea1a5f8ea5079c50995112c17025',
+        'import_branch': 'cray/uan/2.6.0-rc.1-3-gcc65df9',
+        'import_date': datetime.datetime(2023, 4, 12, 14, 31, 40, 364230),
+        'ssh_url': 'git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git',
+        'images': {'cray-application-sles15sp4.x86_64-0.5.19': {'id': '8159f93f-7e18-4875-a8a8-b0fb83c48f07'}}
+    }
+}
+
+PROD_CM_DATA = {
+    'component_versions':
+    {
+        'docker': [
+            {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
+            {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update',
+            'version': '1.3.2'}],
+        'helm': [
+            {'name': 'cray-uan-install', 'version': '1.11.1'}],
+        'repositories': [
+            {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
+        'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
+    }
+}
+
+###################### Helper variables for catalog_data_helper: End ##########################

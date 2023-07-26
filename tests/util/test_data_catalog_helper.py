@@ -24,201 +24,105 @@
 Unit tests for the cray_product_catalog.util.catalog_data_helper module
 """
 
+import unittest
+from tests.mocks import (
+  YAML_DATA, YAML_DATA_MISSING_MAIN_DATA,
+  YAML_DATA_MISSING_PROD_CM_DATA,
+  MAIN_CM_DATA, PROD_CM_DATA
+)
 import yaml
-import datetime
 from typing import Dict
 from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
 
-# Data for testing
-yaml_data = """
-  active: false
-  component_versions:
-    docker:
-    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
-      version: 1.11.1
-    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
-      version: 1.3.2
-    helm:
-    - name: cray-uan-install
-      version: 1.11.1
-    repositories:
-    - members:
-      - uan-2.6.0-sle-15sp4
-      name: uan-2.6-sle-15sp4
-      type: group
-    manifests:
-    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml
-  configuration:
-    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
-    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
-    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
-    import_date: 2023-04-12 14:31:40.364230
-    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
-    images:
-      cray-application-sles15sp4.x86_64-0.5.19:
-        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
 
-yaml_data_missing_prod_cm_data = """
-  active: false
-  configuration:
-    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
-    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
-    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
-    import_date: 2023-04-12 14:31:40.364230
-    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
-    images:
-      cray-application-sles15sp4.x86_64-0.5.19:
-        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
+class TestCatalogDataHelper(unittest.TestCase):
+  """Tests for catalog_data_helper."""
 
-yaml_data_missing_main_data = """
-  component_versions:
-    docker:
-    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
-      version: 1.11.1
-    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
-      version: 1.3.2
-    helm:
-    - name: cray-uan-install
-      version: 1.11.1
-    repositories:
-    - members:
-      - uan-2.6.0-sle-15sp4
-      name: uan-2.6-sle-15sp4
-      type: group
-    manifests:
-    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml"""
+  def test_split_data_sanity(self):
+      """Sanity check of split of YAML into main and product-specific data | +ve test case"""
+
+      # expected data
+      main_cm_data_expected = MAIN_CM_DATA
+      prod_cm_data_expected = PROD_CM_DATA
+
+      # YAML raw to Python object
+      yaml_object: Dict = yaml.safe_load(YAML_DATA)
+
+      main_cm_data: Dict
+      prod_cm_data: Dict
+      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+
+      assert main_cm_data == main_cm_data_expected
+      assert prod_cm_data == prod_cm_data_expected
 
 
-def test_split_data_sanity():
-    """Sanity check of split of YAML into main and product-specific data | +ve test case"""
+  def test_split_missing_prod_cm_data(self):
+      """Missing product ConfigMap data check"""
 
-    # expected data
-    main_cm_data_expected = {
-        'active': False,
-        'configuration':
-            {
-                'clone_url': 'https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git',
-                'commit': '6a5f52dfbfe7ea1a5f8ea5079c50995112c17025',
-                'import_branch': 'cray/uan/2.6.0-rc.1-3-gcc65df9',
-                'import_date': datetime.datetime(2023, 4, 12, 14, 31, 40, 364230),
-                'ssh_url': 'git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git',
-                'images': {'cray-application-sles15sp4.x86_64-0.5.19': {'id': '8159f93f-7e18-4875-a8a8-b0fb83c48f07'}}
-            }
-    }
-    prod_cm_data_expected = {
-        'component_versions':
-            {
-                'docker': [
-                    {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
-                    {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update',
-                     'version': '1.3.2'}],
-                'helm': [
-                    {'name': 'cray-uan-install', 'version': '1.11.1'}],
-                'repositories': [
-                    {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
-                'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
-            }
-    }
+      # expected data
+      main_cm_data_expected = MAIN_CM_DATA
+      prod_cm_data_expected = {}
 
-    # YAML raw to Python object
-    yaml_object: Dict = yaml.safe_load(yaml_data)
+      # YAML raw to Python object
+      yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_PROD_CM_DATA)
 
-    main_cm_data: Dict
-    prod_cm_data: Dict
-    main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+      main_cm_data: Dict
+      prod_cm_data: Dict
+      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-    assert main_cm_data == main_cm_data_expected
-    assert prod_cm_data == prod_cm_data_expected
+      assert main_cm_data == main_cm_data_expected
+      assert prod_cm_data == prod_cm_data_expected
 
 
-def test_split_missing_prod_cm_data():
-    """Missing product ConfigMap data check"""
+  def test_split_missing_main_cm_data(self):
+      """Missing main ConfigMap data check"""
 
-    # expected data
-    main_cm_data_expected = {
-        'active': False,
-        'configuration':
-            {
-                'clone_url': 'https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git',
-                'commit': '6a5f52dfbfe7ea1a5f8ea5079c50995112c17025',
-                'import_branch': 'cray/uan/2.6.0-rc.1-3-gcc65df9',
-                'import_date': datetime.datetime(2023, 4, 12, 14, 31, 40, 364230),
-                'ssh_url': 'git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git',
-                'images': {'cray-application-sles15sp4.x86_64-0.5.19': {'id': '8159f93f-7e18-4875-a8a8-b0fb83c48f07'}}
-            }
-    }
-    prod_cm_data_expected = {}
+      # expected data
+      main_cm_data_expected = {}
+      prod_cm_data_expected = PROD_CM_DATA
 
-    # YAML raw to Python object
-    yaml_object: Dict = yaml.safe_load(yaml_data_missing_prod_cm_data)
+      # YAML raw to Python object
+      yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_MAIN_DATA)
 
-    main_cm_data: Dict
-    prod_cm_data: Dict
-    main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+      main_cm_data: Dict
+      prod_cm_data: Dict
+      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-    assert main_cm_data == main_cm_data_expected
-    assert prod_cm_data == prod_cm_data_expected
+      assert main_cm_data == main_cm_data_expected
+      assert prod_cm_data == prod_cm_data_expected
 
 
-def test_split_missing_main_cm_data():
-    """Missing main ConfigMap data check"""
-
-    # expected data
-    main_cm_data_expected = {}
-    prod_cm_data_expected = {
-        'component_versions':
-            {
-                'docker': [
-                    {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
-                    {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update',
-                     'version': '1.3.2'}],
-                'helm': [
-                    {'name': 'cray-uan-install', 'version': '1.11.1'}],
-                'repositories': [
-                    {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
-                'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
-            }
-    }
-
-    # YAML raw to Python object
-    yaml_object: Dict = yaml.safe_load(yaml_data_missing_main_data)
-
-    main_cm_data: Dict
-    prod_cm_data: Dict
-    main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
-
-    assert main_cm_data == main_cm_data_expected
-    assert prod_cm_data == prod_cm_data_expected
+  def test_format_product_cm_name_sanity(self):
+      """Unit test case for product name formatting"""
+      product_name = "dummy-valid-1"
+      config_map = "cm"
+      assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
 
 
-def test_format_product_cm_name_sanity():
-    """Unit test case for product name formatting"""
-    product_name = "dummy-valid-1"
-    config_map = "cm"
-    assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
+  def test_format_product_name_transform(self):
+      """Unit test case for valid product name transformation"""
+      product_name = "23dummy_valid-1.x86"
+      config_map = "cm"
+      assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
 
 
-def test_format_product_name_transform():
-    """Unit test case for valid product name transformation"""
-    product_name = "23dummy_valid-1.x86"
-    config_map = "cm"
-    assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
+  def test_format_product_name_invalid_cases(self):
+      """Unit test case for invalid product names"""
 
+      # case with special characters
+      product_name = "po90-$_invalid"
+      config_map = "cm"
+      assert format_product_cm_name(config_map, product_name) == ""
 
-def test_format_product_name_invalid_cases():
-    """Unit test case for invalid product names"""
+      # large name with non-blank ConfigMap case
+      product_name = "ola-9" * 60
+      config_map = "cm"
+      assert format_product_cm_name(config_map, product_name) == ""
 
-    # case with special characters
-    product_name = "po90-$_invalid"
-    config_map = "cm"
-    assert format_product_cm_name(config_map, product_name) == ""
+      # large name with blank ConfigMap case
+      product_name = "ola-9" * 60
+      config_map = ""
+      assert format_product_cm_name(config_map, product_name) == ""
 
-    # large name with non-blank ConfigMap case
-    product_name = "ola-9" * 60
-    config_map = "cm"
-    assert format_product_cm_name(config_map, product_name) == ""
-
-    # large name with blank ConfigMap case
-    product_name = "ola-9" * 60
-    config_map = ""
-    assert format_product_cm_name(config_map, product_name) == ""
+if __name__ == '__main__':
+  unittest.main()
