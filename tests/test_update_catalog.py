@@ -27,26 +27,9 @@
 import unittest
 import os
 from unittest import mock
-from tests.mocks import (
-    UPDATE_DATA,
-    ApiInstance,
-    ApiException
+from tests.mock_update_catalog import (
+    UPDATE_DATA, ApiInstance, ApiException
 )
-
-""" 
-Mocking environment variables before import so that :
-1. import (create_config_map, update_config_map and main) is successful
-2. Additionally they will be used in testcase to verify the tests.
-"""
-mock.patch.dict(
-    os.environ, {
-        'PRODUCT': 'sat',
-        'PRODUCT_VERSION': '1.0.0',
-        'YAML_CONTENT_STRING': 'Test data',
-        'CONFIG_MAP_NAMESPACE': 'myNamespace'
-    }
-).start()
-
 from cray_product_catalog.catalog_update import (
     create_config_map,
     update_config_map,
@@ -142,10 +125,12 @@ class TestCatalogUpdate(unittest.TestCase):
         with mock.patch(
                 'cray_product_catalog.catalog_update.split_catalog_data', return_value=mock_split_catalog_data()
         ):
-            # call method under test
+            # Call method under test
             main()
-            expected_product_cm = 'cray-product-catalog-sat' # sat is from PRODUCT environment defined in this file at top, L43
-            expected_namespace = 'myNamespace' # This is the namespace defined in the env in this file at L43.
+            # sat is from PRODUCT environment variable.
+            expected_product_cm = 'cray-product-catalog-sat'
+            # myNamespace is from CONFIG_MAP_NAMESPACE environment variable.
+            expected_namespace = 'myNamespace'
             self.mock_update_config_map.assert_called_with(prod_cm, expected_product_cm, expected_namespace)
 
     def test_main_for_empty_product_configmap(self):
@@ -174,7 +159,8 @@ class TestCatalogUpdate(unittest.TestCase):
                     main()
                     # Verify the log message in exception
                     self.assertTrue(
-                        "ERROR Not updating ConfigMaps because the provided product name is invalid: 'sat'" in context.exception
+                        "ERROR Not updating ConfigMaps because the provided product name is invalid: 'sat'"
+                        in context.exception
                     )
                     # Verify that update config map is not called in case of exception
                     self.mock_update_config_map.assert_not_called()

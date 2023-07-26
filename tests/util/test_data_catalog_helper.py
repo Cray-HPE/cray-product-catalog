@@ -36,93 +36,89 @@ from cray_product_catalog.util.catalog_data_helper import split_catalog_data, fo
 
 
 class TestCatalogDataHelper(unittest.TestCase):
-  """Tests for catalog_data_helper."""
+    """Tests for catalog_data_helper."""
 
-  def test_split_data_sanity(self):
-      """Sanity check of split of YAML into main and product-specific data | +ve test case"""
+    def test_split_data_sanity(self):
+        """Sanity check of split of YAML into main and product-specific data | +ve test case"""
 
-      # expected data
-      main_cm_data_expected = MAIN_CM_DATA
-      prod_cm_data_expected = PROD_CM_DATA
+        # expected data
+        main_cm_data_expected = MAIN_CM_DATA
+        prod_cm_data_expected = PROD_CM_DATA
 
-      # YAML raw to Python object
-      yaml_object: Dict = yaml.safe_load(YAML_DATA)
+        # YAML raw to Python object
+        yaml_object: Dict = yaml.safe_load(YAML_DATA)
 
-      main_cm_data: Dict
-      prod_cm_data: Dict
-      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+        main_cm_data: Dict
+        prod_cm_data: Dict
+        main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-      assert main_cm_data == main_cm_data_expected
-      assert prod_cm_data == prod_cm_data_expected
+        assert main_cm_data == main_cm_data_expected
+        assert prod_cm_data == prod_cm_data_expected
 
+    def test_split_missing_prod_cm_data(self):
+        """Missing product ConfigMap data check"""
 
-  def test_split_missing_prod_cm_data(self):
-      """Missing product ConfigMap data check"""
+        # expected data
+        main_cm_data_expected = MAIN_CM_DATA
+        prod_cm_data_expected = {}
 
-      # expected data
-      main_cm_data_expected = MAIN_CM_DATA
-      prod_cm_data_expected = {}
+        # YAML raw to Python object
+        yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_PROD_CM_DATA)
 
-      # YAML raw to Python object
-      yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_PROD_CM_DATA)
+        main_cm_data: Dict
+        prod_cm_data: Dict
+        main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-      main_cm_data: Dict
-      prod_cm_data: Dict
-      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+        assert main_cm_data == main_cm_data_expected
+        assert prod_cm_data == prod_cm_data_expected
 
-      assert main_cm_data == main_cm_data_expected
-      assert prod_cm_data == prod_cm_data_expected
+    def test_split_missing_main_cm_data(self):
+        """Missing main ConfigMap data check"""
 
+        # expected data
+        main_cm_data_expected = {}
+        prod_cm_data_expected = PROD_CM_DATA
 
-  def test_split_missing_main_cm_data(self):
-      """Missing main ConfigMap data check"""
+        # YAML raw to Python object
+        yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_MAIN_DATA)
 
-      # expected data
-      main_cm_data_expected = {}
-      prod_cm_data_expected = PROD_CM_DATA
+        main_cm_data: Dict
+        prod_cm_data: Dict
+        main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-      # YAML raw to Python object
-      yaml_object: Dict = yaml.safe_load(YAML_DATA_MISSING_MAIN_DATA)
+        assert main_cm_data == main_cm_data_expected
+        assert prod_cm_data == prod_cm_data_expected
 
-      main_cm_data: Dict
-      prod_cm_data: Dict
-      main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
+    def test_format_product_cm_name_sanity(self):
+        """Unit test case for product name formatting"""
+        product_name = "dummy-valid-1"
+        config_map = "cm"
+        assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
 
-      assert main_cm_data == main_cm_data_expected
-      assert prod_cm_data == prod_cm_data_expected
+    def test_format_product_name_transform(self):
+        """Unit test case for valid product name transformation"""
+        product_name = "23dummy_valid-1.x86"
+        config_map = "cm"
+        assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
 
+    def test_format_product_name_invalid_cases(self):
+        """Unit test case for invalid product names"""
 
-  def test_format_product_cm_name_sanity(self):
-      """Unit test case for product name formatting"""
-      product_name = "dummy-valid-1"
-      config_map = "cm"
-      assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
+        # case with special characters
+        product_name = "po90-$_invalid"
+        config_map = "cm"
+        assert format_product_cm_name(config_map, product_name) == ""
 
+        # large name with non-blank ConfigMap case
+        product_name = "ola-9" * 60
+        config_map = "cm"
+        assert format_product_cm_name(config_map, product_name) == ""
 
-  def test_format_product_name_transform(self):
-      """Unit test case for valid product name transformation"""
-      product_name = "23dummy_valid-1.x86"
-      config_map = "cm"
-      assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
+        # large name with blank ConfigMap case
+        product_name = "ola-9" * 60
+        config_map = ""
+        assert format_product_cm_name(config_map, product_name) == ""
 
-
-  def test_format_product_name_invalid_cases(self):
-      """Unit test case for invalid product names"""
-
-      # case with special characters
-      product_name = "po90-$_invalid"
-      config_map = "cm"
-      assert format_product_cm_name(config_map, product_name) == ""
-
-      # large name with non-blank ConfigMap case
-      product_name = "ola-9" * 60
-      config_map = "cm"
-      assert format_product_cm_name(config_map, product_name) == ""
-
-      # large name with blank ConfigMap case
-      product_name = "ola-9" * 60
-      config_map = ""
-      assert format_product_cm_name(config_map, product_name) == ""
 
 if __name__ == '__main__':
-  unittest.main()
+    unittest.main()

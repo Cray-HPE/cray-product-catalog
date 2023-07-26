@@ -26,6 +26,7 @@ Mock data for ProductCatalog and InstalledProductVersion unit tests
 """
 
 from yaml import safe_dump
+import datetime
 
 
 # Two versions of a product named SAT where:
@@ -139,90 +140,7 @@ MOCK_PRODUCT_CATALOG_DATA = {
     'other_product': safe_dump(OTHER_PRODUCT_VERSION)
 }
 
-###################### Helper Classes for catalog_update: Start ##########################
-from kubernetes.client.rest import ApiException
-
-UPDATE_DATA = {
-    '2.0.0': {
-        'component_versions': {
-            'docker': [
-                {'name': 'cray/cray-cos', 'version': '1.0.0'},
-                {'name': 'cray/cos-cfs-install', 'version': '1.4.0'}
-            ]
-        }
-    }
-}
-
-class Name:
-    """
-    Class to provide dummy metadata object with name and resource_version
-    """
-    def __init__(self):
-        self.name = 'cray-product-catalog'
-        self.resource_version = 1
-
-
-class Response:
-    """
-    Class to generate response for k8s api call api_instance.read_namespaced_config_map(name, namespace)
-    """
-    def __init__(self):
-        self.data = COS_VERSIONS
-        self.metadata = Name()
-
-
-ERR_NOT_FOUND = 404
-
-
-class ApiException(ApiException):
-    """
-    Custom Exception to define status
-    """
-    def __init__(self):
-        self.status = ERR_NOT_FOUND
-
-
-class ApiInstance():
-    """
-    Class to raise custom exception and ignore function calls
-    """
-    def __init__(self, raise_exception=False):
-        self.raise_exception = raise_exception
-        self.count = 0
-
-    def create_namespaced_config_map(self, namespace='a', body='b'):
-        """
-        Dummy Function to raise exception, if needed
-        """
-        if self.raise_exception:
-            raise ApiException()
-        else:
-            pass
-
-    def read_namespaced_config_map(self, name, namespace):
-        """
-        Dummy Function to :
-        1. Raise exception
-        2. generate and return proper response with data and metadata
-        """
-        # if this is called for first time return exception, so that product cm is created.
-        if self.count == 0:
-            self.count += 1
-            raise ApiException()
-        else :
-            return Response()
-
-
-    def patch_namespaced_config_map(self, name, namespace, body='xxx'):
-        """
-        Dummy function to handle the call in code, does nothing
-        """
-        pass
-
-###################### Helper Classes for catalog_update: End ##########################
-###################### Helper variables for catalog_data_helper: Start ##########################
-import datetime
-
+# Helper variables for catalog_data_helper: Start
 YAML_DATA = """
   active: false
   component_versions:
@@ -300,13 +218,16 @@ PROD_CM_DATA = {
         'docker': [
             {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
             {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update',
-            'version': '1.3.2'}],
+            'version': '1.3.2'}
+        ],
         'helm': [
-            {'name': 'cray-uan-install', 'version': '1.11.1'}],
+            {'name': 'cray-uan-install', 'version': '1.11.1'}
+        ],
         'repositories': [
-            {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}],
+            {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}
+        ],
         'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
     }
 }
 
-###################### Helper variables for catalog_data_helper: End ##########################
+# Helper variables for catalog_data_helper: End
