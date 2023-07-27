@@ -315,8 +315,8 @@ def modify_config_map(name, namespace, product, product_version, key=None, max_a
                 name, namespace, client.V1ConfigMap(data=config_map_data)
             )
             LOGGER.info("ConfigMap update attempt %s successful", attempt)
-        except ApiException as e:
-            if e.status == ERR_CONFLICT:
+        except ApiException as exc:
+            if exc.status == ERR_CONFLICT:
                 # A conflict is raised if the resourceVersion field was unexpectedly
                 # incremented, e.g. if another process updated the ConfigMap. This
                 # provides concurrency protection.
