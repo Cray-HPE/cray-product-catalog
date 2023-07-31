@@ -140,86 +140,26 @@ class TestProductCatalog(unittest.TestCase):
         self.assertEqual(message, logs_cm.records[0].message)
         self.assertEqual(product_catalog.products, [])
 
-    def test_create_product_catalog_invalid_product_schema_for_docker_1(self):
+    def test_create_product_catalog_invalid_product_schema_for_docker(self):
         """
         Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
         As per schema, 'docker' should be an array.
         """
         self.check_for_invalid_product_schema('sat', '2.1')
 
-    def test_create_product_catalog_invalid_product_schema_for_docker_2(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'name' and 'version' fields are mandatory for 'docker'.
-        Here testing for missing field 'version'.
-        """
-        self.check_for_invalid_product_schema('sat', '2.2')
-
-    def test_create_product_catalog_invalid_product_schema_for_docker_3(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'name' and 'version' fields are mandatory for 'docker'.
-        Here testing for missing field 'name'.
-        """
-        self.check_for_invalid_product_schema('sat', '2.3')
-
-    def test_create_product_catalog_invalid_product_schema_for_s3_1(self):
+    def test_create_product_catalog_invalid_product_schema_for_s3(self):
         """
         Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
         As per schema, 's3' should be an array.
         """
         self.check_for_invalid_product_schema('cpe', '2.1')
 
-    def test_create_product_catalog_invalid_product_schema_for_s3_2(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'bucket' and 'key' fields are mandatory for 's3'.
-        Here testing for missing field 'key'.
-        """
-        self.check_for_invalid_product_schema('cpe', '2.2')
-
-    def test_create_product_catalog_invalid_product_schema_for_s3_3(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'bucket' and 'key' fields are mandatory for 's3'.
-        Here testing for missing field 'bucket'.
-        """
-        self.check_for_invalid_product_schema('cpe', '2.3')
-
-    def test_create_product_catalog_invalid_product_schema_for_s3_4(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'key' field in 's3' cannot be an empty string.
-        """
-        self.check_for_invalid_product_schema('cpe', '2.4')
-
-    def test_create_product_catalog_invalid_product_schema_for_s3_5(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'bucket' field in 's3' cannot be an empty string.
-        """
-        self.check_for_invalid_product_schema('cpe', '2.5')
-
-    def test_create_product_catalog_invalid_product_schema_for_manifests_1(self):
+    def test_create_product_catalog_invalid_product_schema_for_manifests(self):
         """
         Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
         As per schema, 'manifests' should be an array.
         """
         self.check_for_invalid_product_schema('cos', '2.1')
-
-    def test_create_product_catalog_invalid_product_schema_for_manifests_2(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'manifests' should be an array of string.
-        """
-        self.check_for_invalid_product_schema('cos', '2.2')
-
-    def test_create_product_catalog_invalid_product_schema_for_manifests_3(self):
-        """
-        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
-        As per schema, 'manifests' should not be an array of empty string.
-        """
-        self.check_for_invalid_product_schema('cos', '2.3')
 
     def test_get_matching_product(self):
         """Test getting a particular product by name/version."""

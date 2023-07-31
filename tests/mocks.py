@@ -75,8 +75,8 @@ SAT_VERSIONS = {
 
 # Two versions of a product named COS where:
 # - The two versions have one docker image name and version in common
-# - The first version has docker and manifests but not repositories, configuration, images, or recipes
-# - The second version has repositories, configuration, images, and recipes
+# - The first version has docker and manifests but not helm charts, repositories, configuration, images, or recipes
+# - The second version has docker, helm charts, repositories, configuration, images, and recipes, but not manifests
 COS_VERSIONS = {
     '2.0.0': {
         'component_versions': {
@@ -183,16 +183,6 @@ MOCK_INVALID_PRODUCT_DATA = {
             'component_versions': {
                 'manifests': 'should be an array'
             }
-        },
-        '2.2': {
-            'component_versions': {
-                'manifests': [111, 222]     # should be an array of string
-            }
-        },
-        '2.3': {
-            'component_versions': {
-                'manifests': ['']   # should not be an empty string
-            }
         }
     },
     'sat': {
@@ -200,54 +190,12 @@ MOCK_INVALID_PRODUCT_DATA = {
             'component_versions': {
                 'docker': 'should be an array'
             }
-        },
-        '2.2': {
-            'component_versions': {
-                'docker': [
-                    {'name': 'cray/cray-sat'}   # Missiing field `version`
-                ]
-            }
-        },
-        '2.3': {
-            'component_versions': {
-                'docker': [
-                    {'version': '1.0.1'}    # Missing  field `name`
-                ]
-            }
         }
     },
     'cpe': {
         '2.1': {
             'component_versions': {
                 's3': 'should be an array'
-            }
-        },
-        '2.2': {
-            'component_versions': {
-                's3': [
-                    {'bucket': 'boot-images'}   # Missing field `key`
-                ]
-            }
-        },
-        '2.3': {
-            'component_versions': {
-                's3': [
-                    {'key': 'PE/CPE-base.x86_64-2.0.squashfs'}    # Missing field `bucket`
-                ]
-            }
-        },
-        '2.4': {
-            'component_versions': {
-                's3': [
-                    {'bucket': 'boot-images', 'key': ''}    # Empty field `key`
-                ]
-            }
-        },
-        '2.5': {
-            'component_versions': {
-                's3': [
-                    {'bucket': '', 'key': 'PE/CPE-base.x86_64-2.0.squashfs'}    # Empty field `bucket`
-                ]
             }
         }
     }

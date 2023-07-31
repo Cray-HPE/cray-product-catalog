@@ -245,7 +245,7 @@ class InstalledProductVersion:
         """Get Helm charts associated with this InstalledProductVersion.
 
         Returns:
-            A list of tuples of (image_name, image_version)
+            A list of tuples of (chart_name, chart_version)
         """
         return [(component['name'], component['version'])
                 for component in self.component_data.get(COMPONENT_HELM) or []]
@@ -255,7 +255,7 @@ class InstalledProductVersion:
         """Get S3 artifacts associated with this InstalledProductVersion.
 
         Returns:
-            A list of tuples of (image_name, image_version)
+            A list of tuples of (artifact bucket, artifact key)
         """
         return [(component['bucket'], component['key'])
                 for component in self.component_data.get(COMPONENT_S3) or []]
@@ -265,7 +265,7 @@ class InstalledProductVersion:
         """Get Loftsman manifests associated with this InstalledProductVersion.
 
         Returns:
-            A list of tuples of (image_name, image_version)
+            A list of manifests
         """
         return self.component_data.get(COMPONENT_MANIFESTS, [])
 
