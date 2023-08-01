@@ -52,8 +52,8 @@ class TestCatalogDataHelper(unittest.TestCase):
         prod_cm_data: Dict
         main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-        assert main_cm_data == main_cm_data_expected
-        assert prod_cm_data == prod_cm_data_expected
+        self.assertEqual(main_cm_data, main_cm_data_expected)
+        self.assertEqual(prod_cm_data, prod_cm_data_expected)
 
     def test_split_missing_prod_cm_data(self):
         """Missing product ConfigMap data check"""
@@ -69,8 +69,8 @@ class TestCatalogDataHelper(unittest.TestCase):
         prod_cm_data: Dict
         main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-        assert main_cm_data == main_cm_data_expected
-        assert prod_cm_data == prod_cm_data_expected
+        self.assertEqual(main_cm_data, main_cm_data_expected)
+        self.assertEqual(prod_cm_data, prod_cm_data_expected)
 
     def test_split_missing_main_cm_data(self):
         """Missing main ConfigMap data check"""
@@ -86,20 +86,20 @@ class TestCatalogDataHelper(unittest.TestCase):
         prod_cm_data: Dict
         main_cm_data, prod_cm_data = split_catalog_data(yaml_object)
 
-        assert main_cm_data == main_cm_data_expected
-        assert prod_cm_data == prod_cm_data_expected
+        self.assertEqual(main_cm_data, main_cm_data_expected)
+        self.assertEqual(prod_cm_data, prod_cm_data_expected)
 
     def test_format_product_cm_name_sanity(self):
         """Unit test case for product name formatting"""
         product_name = "dummy-valid-1"
         config_map = "cm"
-        assert format_product_cm_name(config_map, product_name) == f"{config_map}-{product_name}"
+        self.assertEqual(format_product_cm_name(config_map, product_name), f"{config_map}-{product_name}")
 
     def test_format_product_name_transform(self):
         """Unit test case for valid product name transformation"""
         product_name = "23dummy_valid-1.x86"
         config_map = "cm"
-        assert format_product_cm_name(config_map, product_name) == f"{config_map}-23dummy-valid-1.x86"
+        self.assertEqual(format_product_cm_name(config_map, product_name), f"{config_map}-23dummy-valid-1.x86")
 
     def test_format_product_name_invalid_cases(self):
         """Unit test case for invalid product names"""
@@ -107,17 +107,17 @@ class TestCatalogDataHelper(unittest.TestCase):
         # case with special characters
         product_name = "po90-$_invalid"
         config_map = "cm"
-        assert format_product_cm_name(config_map, product_name) == ""
+        self.assertEqual(format_product_cm_name(config_map, product_name), "")
 
         # large name with non-blank ConfigMap case
         product_name = "ola-9" * 60
         config_map = "cm"
-        assert format_product_cm_name(config_map, product_name) == ""
+        self.assertEqual(format_product_cm_name(config_map, product_name), "")
 
         # large name with blank ConfigMap case
         product_name = "ola-9" * 60
         config_map = ""
-        assert format_product_cm_name(config_map, product_name) == ""
+        self.assertEqual(format_product_cm_name(config_map, product_name), "")
 
 
 if __name__ == '__main__':

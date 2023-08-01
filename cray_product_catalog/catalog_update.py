@@ -145,8 +145,8 @@ def create_config_map(api_instance, name, namespace):
             namespace=namespace, body=new_cm
         )
         LOGGER.debug("Created product ConfigMap %s/%s", namespace, name)
-    except ApiException as err:
-        LOGGER.exception("Error calling create_namespaced_config_map")
+    except ApiException:
+        LOGGER.warning("Error calling create_namespaced_config_map")
 
 
 def update_config_map(data: dict, name, namespace):
@@ -194,7 +194,7 @@ def update_config_map(data: dict, name, namespace):
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
             else:
                 # If product ConfigMap is not available then create
-                LOGGER.warning("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
+                LOGGER.info("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
                 create_config_map(api_instance, name, namespace)
             continue
 
@@ -304,20 +304,20 @@ def main():
     if VALIDATE_SCHEMA:
         validate_schema(data)
 
-    PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
+    product_config_map = format_product_cm_name(CONFIG_MAP, PRODUCT)
 
     LOGGER.debug("Splitting cray-product-catalog data")
     main_cm_data, prod_cm_data = split_catalog_data(data)
 
-    if prod_cm_data and PRODUCT_CONFIG_MAP == '':
+    if prod_cm_data and product_config_map == '':
         LOGGER.error("Not updating ConfigMaps because the provided product name is invalid: '%s'", PRODUCT)
         raise SystemExit(1)
 
     update_config_map(main_cm_data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
 
-    # If PRODUCT_CONFIG_MAP is not an empty string and prod_cm_data is not an empty dict
+    # If product_config_map is not an empty string and prod_cm_data is not an empty dict
     if prod_cm_data:
-        update_config_map(prod_cm_data, PRODUCT_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+        update_config_map(prod_cm_data, product_config_map, CONFIG_MAP_NAMESPACE)
 
 
 if __name__ == "__main__":
