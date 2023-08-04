@@ -82,6 +82,27 @@ class TestCatalogUpdate(unittest.TestCase):
             self.assertEqual(captured.records[0].getMessage(),
                              "Error calling create_namespaced_config_map")  # Verify the exact log message
 
+    def test_update_config_map_max_retries(self):
+        """
+        Verify update_config_map exits after max retries if Kubernetes API raise exception.
+        """
+        name = "cos"
+        namespace = "product"
+        self.mock_v1configmap.metadata = None
+
+        self.mock_read_config_map = mock.patch(
+            'cray_product_catalog.catalog_update.client.CoreV1Api.read_namespaced_config_map'
+            ).start().side_effect = ApiException()
+
+        with self.assertLogs() as captured:
+            with mock.patch(
+                    'cray_product_catalog.catalog_update.random.randint', return_value=0
+            ):
+                # call method under test
+                update_config_map(UPDATE_DATA, name, namespace)
+                self.assertEqual(captured.records[-1].getMessage(),
+                    f"Exceeded number of attempts; Not updating ConfigMap {namespace}/{name}.")  # Verify log message
+
     def test_update_config_map(self):
         """
         Verify `create_config_map` is called if provided `name` is of product and not `CONFIG_MAP` (main cm)
