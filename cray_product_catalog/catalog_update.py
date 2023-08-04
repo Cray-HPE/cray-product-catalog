@@ -325,5 +325,6 @@ def main():
     if prod_cm_data:
         update_config_map(prod_cm_data, product_config_map, CONFIG_MAP_NAMESPACE)
 
+
 if __name__ == "__main__":
     main()

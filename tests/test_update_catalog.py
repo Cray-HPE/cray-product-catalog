@@ -100,8 +100,9 @@ class TestCatalogUpdate(unittest.TestCase):
             ):
                 # call method under test
                 update_config_map(UPDATE_DATA, name, namespace)
+                # Verify the exact log message
                 self.assertEqual(captured.records[-1].getMessage(),
-                    f"Exceeded number of attempts; Not updating ConfigMap {namespace}/{name}.")  # Verify log message
+                                 f"Exceeded number of attempts; Not updating ConfigMap {namespace}/{name}.")
 
     def test_update_config_map(self):
         """
