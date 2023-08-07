@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.8.13] - 2023-07-31
-
 ### Changed
 
 - CASM-4350: To address the 1MiB size limit of Kubernetes ConfigMaps, the 
   `cray-product-catalog` Kubernetes ConfigMap is split into multiple smaller
   ConfigMaps with each product's `component_versions` data in its own ConfigMap.
   Modify the `catalog_update.py` script to update data across these ConfigMaps.
+
+### Dependencies
+- Bump `jsonschema` from 4.18.3 to 4.18.4 (#270)
+- Bump `pip` from 23.2 to 23.2.1 ([#274](https://github.com/Cray-HPE/cray-product-catalog/pull/274))
 
 ## [1.8.12] - 2023-07-18
 
