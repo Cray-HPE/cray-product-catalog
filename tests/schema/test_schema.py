@@ -65,6 +65,18 @@ SAT_NEW_FORMAT = yaml.safe_load("""
           - sat-2.2.0-sle-15sp2
         - name: sat-another-repo-sle-15sp2
           type: hosted
+      helm:
+        - name: sat-sle15sp2-artifacts
+          version: 1.3.23
+        - name: cray-cps
+          version: 1.8.15
+      s3:
+        - bucket: boot-images
+          key: PE/CPE-base.x86_64-2.0.squashfs
+        - bucket: boot-images
+          key: PE/CPE-amd.x86_64-2.0.squashfs
+      manifests:
+      - config-data/argo/loftsman/sat/2.2.0/manifests/sat-services.yaml
     configuration:
       clone_url: https://vcs.local/vcs/cray/sat-config-management.git
       commit: cbd90ecfcc9566ab2de6d7cdd8d43cacc0dfb92a
@@ -171,6 +183,90 @@ class TestSchemaValidation(unittest.TestCase):
         """Test a group type repo that does not have a 'members' key does not validate."""
         data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
         del data_to_validate['component_versions']['repositories'][0]['members']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_missing_helm_name_key(self):
+        """Test a helm chart that does not have a 'name' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        del data_to_validate['component_versions']['helm'][0]['name']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_invalid_helm_name_key(self):
+        """Test a helm chart that has non-string value in 'name' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['helm'][0]['name'] = 88
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_missing_helm_version_key(self):
+        """Test a helm chart that does not have a 'version' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        del data_to_validate['component_versions']['helm'][0]['version']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_invalid_helm_version_key(self):
+        """Test a helm chart that has non-string value in 'version' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['helm'][0]['version'] = 88
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_missing_s3_bucket_field(self):
+        """Test a s3 artifacts that does not have a 'bucket' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        del data_to_validate['component_versions']['s3'][0]['bucket']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_empty_s3_bucket(self):
+        """Test a s3 artifacts that has empty string in 'bucket' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['s3'][0]['bucket'] = ''
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_invalid_s3_bucket(self):
+        """Test a s3 artifacts that has non-string value in 'bucket' key does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['s3'][0]['bucket'] = 88
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_missing_s3_key_field(self):
+        """Test a s3 artifacts that does not have a 'key' field does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        del data_to_validate['component_versions']['s3'][0]['key']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_empty_s3_key(self):
+        """Test a s3 artifacts that has empty string in 'key' field does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['s3'][0]['key'] = ''
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_invalid_s3_key(self):
+        """Test a s3 artifacts that has non-string value in 'key' field does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['s3'][0]['key'] = 88
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_empty_manifests_key(self):
+        """Test a manifests that has array of empty string does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['manifests'][0] = ['']
+        with self.assertRaises(ValidationError):
+            validate(data_to_validate)
+
+    def test_invalid_manifests_key(self):
+        """Test a manifests that has array of non-string does not validate."""
+        data_to_validate = copy.deepcopy(SAT_NEW_FORMAT)
+        data_to_validate['component_versions']['manifests'][0] = [99, 88]
         with self.assertRaises(ValidationError):
             validate(data_to_validate)
 

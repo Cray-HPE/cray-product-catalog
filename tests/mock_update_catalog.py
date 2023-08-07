@@ -26,10 +26,9 @@ Mock data for catalog_update unit tests
 """
 
 from kubernetes.client.rest import ApiException
-import datetime
 import os
 from unittest import mock
-from tests.mocks import COS_VERSIONS
+from tests.mocks import COS_VERSIONS, Name
 
 # Mocking environment variables before import so that:
 # 1. import (create_config_map, update_config_map and main) is successful
@@ -55,15 +54,6 @@ UPDATE_DATA = {
 }
 
 ERR_NOT_FOUND = 404
-
-
-class Name:
-    """
-    Class to provide dummy metadata object with name and resource_version
-    """
-    def __init__(self):
-        self.name = 'cray-product-catalog'
-        self.resource_version = 1
 
 
 class Response:
