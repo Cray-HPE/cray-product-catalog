@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Changed
+
+- CASM-4427: Implement a prototype to have granular query from main and sub ConfigMaps
+- CASM-3981: Add S3 artifacts and Loftsman manifests to the Product Catalog schema
 - CASM-4368: Delete Cray Product Catalog details from main and sub ConfigMaps for a particular
   product version.
 - Added new argument `max_attempts` to `modify_config_map` function in
@@ -15,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   times when read ConfigMap fails for a product ConfigMap.
 
 ### Dependencies
+
 - Bump `jsonschema` from 4.18.3 to 4.18.4 (#270)
 - Bump `pip` from 23.2 to 23.2.1 ([#274](https://github.com/Cray-HPE/cray-product-catalog/pull/274))
 

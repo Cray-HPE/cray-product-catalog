@@ -31,14 +31,16 @@ import unittest
 from unittest.mock import Mock, patch
 
 from kubernetes.config import ConfigException
-from yaml import safe_dump
 
 from cray_product_catalog.query import (
     ProductCatalog,
     InstalledProductVersion,
     ProductCatalogError
 )
-from tests.mocks import COS_VERSIONS, MOCK_PRODUCT_CATALOG_DATA, SAT_VERSIONS
+from tests.mocks import (
+    COS_VERSIONS, SAT_VERSIONS, CPE_VERSION, MOCK_PRODUCT_CATALOG_DATA,
+    MOCK_INVALID_PRODUCT_DATA, MOCK_PRODUCTS, MockInvalidYaml
+)
 
 
 class TestGetK8sAPI(unittest.TestCase):
@@ -76,7 +78,7 @@ class TestProductCatalog(unittest.TestCase):
         """Set up mocks."""
         self.mock_k8s_api = patch.object(ProductCatalog, '_get_k8s_api').start().return_value
         self.mock_product_catalog_data = copy.deepcopy(MOCK_PRODUCT_CATALOG_DATA)
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data=self.mock_product_catalog_data)
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=self.mock_product_catalog_data)
 
     def tearDown(self):
         """Stop patches."""
@@ -84,16 +86,18 @@ class TestProductCatalog(unittest.TestCase):
 
     def create_and_assert_product_catalog(self):
         """Assert the product catalog was created as expected."""
-        product_catalog = ProductCatalog('mock-name', 'mock-namespace')
-        self.mock_k8s_api.read_namespaced_config_map.assert_called_once_with('mock-name', 'mock-namespace')
+        product_catalog = ProductCatalog('cray-product-catalog', 'mock-namespace')
+        self.mock_k8s_api.list_namespaced_config_map.assert_called_once_with('mock-namespace')
         return product_catalog
 
     def test_create_product_catalog(self):
         """Test creating a simple ProductCatalog."""
+        self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
+        self.mock_load_config_map_data.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_names_and_versions = [
             (name, version) for name in ('sat', 'cos') for version in ('2.0.0', '2.0.1')
-        ] + [('other_product', '2.0.0')]
+        ] + [('cpe', '2.0.0'), ('other_product', '2.0.0')]
         actual_names_and_versions = [
             (product.name, product.version) for product in product_catalog.products
         ]
@@ -101,33 +105,66 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_create_product_catalog_invalid_product_data(self):
         """Test creating a ProductCatalog when the product catalog contains invalid YAML."""
-        self.mock_product_catalog_data['sat'] = '\t'
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[MockInvalidYaml()])
         with self.assertRaisesRegex(ProductCatalogError, 'Failed to load ConfigMap data'):
             self.create_and_assert_product_catalog()
 
     def test_create_product_catalog_null_data(self):
         """Test creating a ProductCatalog when the product catalog contains null data."""
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data=None)
+        self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
+        self.mock_load_config_map_data.return_value = []
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[])
         with self.assertRaisesRegex(ProductCatalogError,
-                                    'No data found in mock-namespace/mock-name ConfigMap.'):
+                                    'No ConfigMaps found in mock-namespace namespace.'):
             self.create_and_assert_product_catalog()
 
-    def test_create_product_catalog_invalid_product_schema(self):
-        """Test creating a ProductCatalog when an entry contains valid YAML but does not match schema."""
-        self.mock_k8s_api.read_namespaced_config_map.return_value = Mock(data={
-            'sat': safe_dump({'2.1': {'component_versions': {'docker': 'should be an array'}}})
-        })
+    def check_for_invalid_product_schema(self, prod, ver):
+        """Check for an ProductCatalog entry containing valid YAML but does not match schema.
+
+        Args:
+            prod (string): Product Name
+            ver (string): Product version
+        """
+        self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
+        self.mock_load_config_map_data.return_value = [
+            InstalledProductVersion(prod, ver, MOCK_INVALID_PRODUCT_DATA.get(prod).get(ver))
+        ]
+        self.mock_k8s_api.list_namespaced_config_map.return_value = Mock(items=[
+            MOCK_INVALID_PRODUCT_DATA.get(prod).get(ver)])
         with self.assertLogs(level=logging.DEBUG) as logs_cm:
             product_catalog = self.create_and_assert_product_catalog()
 
         self.assertEqual(1, len(logs_cm.records))
-        self.assertEqual('The following products have product catalog data that '
-                         'is not valid against the expected schema: sat-2.1',
-                         logs_cm.records[0].message)
+        message = 'The following products have product catalog data that ' + \
+            'is not valid against the expected schema: ' + prod + '-' + ver
+        self.assertEqual(message, logs_cm.records[0].message)
         self.assertEqual(product_catalog.products, [])
+
+    def test_create_product_catalog_invalid_product_schema_for_docker(self):
+        """
+        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
+        As per schema, 'docker' should be an array.
+        """
+        self.check_for_invalid_product_schema('sat', '2.1')
+
+    def test_create_product_catalog_invalid_product_schema_for_s3(self):
+        """
+        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
+        As per schema, 's3' should be an array.
+        """
+        self.check_for_invalid_product_schema('cpe', '2.1')
+
+    def test_create_product_catalog_invalid_product_schema_for_manifests(self):
+        """
+        Test creating a ProductCatalog when an entry contains valid YAML but does not match schema.
+        As per schema, 'manifests' should be an array.
+        """
+        self.check_for_invalid_product_schema('cos', '2.1')
 
     def test_get_matching_product(self):
         """Test getting a particular product by name/version."""
+        self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
+        self.mock_load_config_map_data.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_matching_name_and_version = ('cos', '2.0.0')
         actual_matching_product = product_catalog.get_product('cos', '2.0.0')
@@ -139,6 +176,8 @@ class TestProductCatalog(unittest.TestCase):
 
     def test_get_latest_matching_product(self):
         """Test getting the latest version of a product"""
+        self.mock_load_config_map_data = patch('cray_product_catalog.query.load_config_map_data').start()
+        self.mock_load_config_map_data.return_value = MOCK_PRODUCTS
         product_catalog = self.create_and_assert_product_catalog()
         expected_matching_name_and_version = ('sat', '2.0.1')
         actual_matching_product = product_catalog.get_product('sat')
@@ -170,25 +209,102 @@ class TestInstalledProductVersion(unittest.TestCase):
         )
 
     def test_no_docker_images(self):
-        """Test a product that has an empty dictionary under the 'docker' key returns an empty dictionary."""
+        """Test a product that has an empty dictionary under the 'docker' key returns an empty list."""
         product_with_no_docker_images = InstalledProductVersion(
             'sat', '0.9.9', {'component_versions': {'docker': {}}}
         )
         self.assertEqual(product_with_no_docker_images.docker_images, [])
 
     def test_no_docker_images_null(self):
-        """Test a product that has None under the 'docker' key returns an empty dictionary."""
+        """Test a product that has None under the 'docker' key returns an empty list."""
         product_with_no_docker_images = InstalledProductVersion(
             'sat', '0.9.9', {'component_versions': {'docker': None}}
         )
         self.assertEqual(product_with_no_docker_images.docker_images, [])
 
     def test_no_docker_images_empty_list(self):
-        """Test a product that has an empty list under the 'docker' key returns an empty dictionary."""
+        """Test a product that has an empty list under the 'docker' key returns an empty list."""
         product_with_no_docker_images = InstalledProductVersion(
             'sat', '0.9.9', {'component_versions': {'docker': []}}
         )
         self.assertEqual(product_with_no_docker_images.docker_images, [])
+
+    def test_helm_charts(self):
+        """Test getting the Helm charts."""
+        expected_helm_charts_versions = [
+            ('cos-config', '0.4.76'),
+            ('cos-sle15sp3-artifacts', '1.3.23'),
+            ('cray-cps', '1.8.15')
+        ]
+        self.assertEqual(
+            expected_helm_charts_versions, self.installed_product_version.helm
+        )
+
+    def test_no_helm_charts(self):
+        """Test a product that has an empty dictionary under the 'helm' key returns an empty list."""
+        product_with_no_helm_charts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'helm': {}}}
+        )
+        self.assertEqual(product_with_no_helm_charts.helm, [])
+
+    def test_no_helm_charts_null(self):
+        """Test a product that has None under the 'helm' key returns an empty list."""
+        product_with_no_helm_charts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'helm': None}}
+        )
+        self.assertEqual(product_with_no_helm_charts.helm, [])
+
+    def test_no_helm_charts_empty_list(self):
+        """Test a product that has an empty list under the 'helm' key returns an empty list."""
+        product_with_no_helm_charts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'helm': []}}
+        )
+        self.assertEqual(product_with_no_helm_charts.helm, [])
+
+    def test_s3_artifacts(self):
+        """Test getting the s3 artifacts."""
+        expected_s3_artifacts = [('boot-images', 'PE/CPE-base.x86_64-2.0.squashfs'),
+                                 ('boot-images', 'PE/CPE-amd.x86_64-2.0.squashfs')]
+        product_with_s3_artifacts = InstalledProductVersion(
+            'cpe', '2.0.0', CPE_VERSION['2.0.0']
+        )
+        self.assertEqual(expected_s3_artifacts, product_with_s3_artifacts.s3_artifacts)
+
+    def test_no_s3_artifacts(self):
+        """Test a product that has an empty dictionary under the 's3' key returns an empty list."""
+        product_with_no_s3_artifacts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'s3': {}}}
+        )
+        self.assertEqual(product_with_no_s3_artifacts.s3_artifacts, [])
+
+    def test_no_s3_artifacts_null(self):
+        """Test a product that has None under the 's3' key returns an empty list."""
+        product_with_no_s3_artifacts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'s3': None}}
+        )
+        self.assertEqual(product_with_no_s3_artifacts.s3_artifacts, [])
+
+    def test_no_s3_artifacts_empty_list(self):
+        """Test a product that has an empty list under the 's3' key returns an empty list."""
+        product_with_no_s3_artifacts = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'s3': []}}
+        )
+        self.assertEqual(product_with_no_s3_artifacts.s3_artifacts, [])
+
+    def test_loftsman_manifests(self):
+        """Test getting the Loftsman manifests."""
+        expected_loftsman_manifests = ['config-data/argo/loftsman/cos/2.0.0/manifests/cos-services.yaml']
+        product_with_loftsman_manifests = InstalledProductVersion(
+            'cos', '2.0.0', COS_VERSIONS['2.0.0']
+        )
+        self.assertEqual(expected_loftsman_manifests, product_with_loftsman_manifests.loftsman_manifests)
+
+    def test_no_loftsman_manifests_empty_list(self):
+        """Test a product that has an empty list under the 'manifests' key returns an empty list."""
+        product_with_no_loftsman_manifests = InstalledProductVersion(
+            'sat', '0.9.9', {'component_versions': {'manifests': []}}
+        )
+        self.assertEqual(product_with_no_loftsman_manifests.loftsman_manifests, [])
 
     def test_str(self):
         """Test the string representation of InstalledProductVersion."""
