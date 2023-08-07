@@ -54,13 +54,15 @@ from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util.k8s import load_k8s
 from cray_product_catalog.util.merge_dict import merge_dict
+from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
+
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Parameters to identify ConfigMap and content in it to update
 PRODUCT = os.environ.get("PRODUCT").strip()  # required
 PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
-CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+MAIN_CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
 CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 # One of (YAML_CONTENT_FILE, YAML_CONTENT_STRING) required. For backwards compatibility, YAML_CONTENT
 # may also be given in place of YAML_CONTENT_FILE.
@@ -134,6 +136,21 @@ def active_field_exists(product_data):
     return any("active" in product_data[version] for version in product_data)
 
 
+def create_config_map(api_instance, name, namespace):
+    """Create new product ConfigMap."""
+    try:
+        new_cm = V1ConfigMap()
+        new_cm.metadata = V1ObjectMeta(name=name)
+        api_instance.create_namespaced_config_map(
+            namespace=namespace, body=new_cm
+        )
+        LOGGER.debug("Created product ConfigMap %s/%s", namespace, name)
+        return True
+    except ApiException:
+        LOGGER.warning("Error calling create_namespaced_config_map")
+        return False
+
+
 def update_config_map(data: dict, name, namespace):
     """
     Get the ConfigMap `data` to be added.
@@ -155,7 +172,7 @@ def update_config_map(data: dict, name, namespace):
     api_instance = client.CoreV1Api(k8sclient)
     attempt = 0
 
-    while True:
+    while attempt < retries:
 
         # Wait a while to check the ConfigMap in case multiple products are
         # attempting to update the same ConfigMap, or the ConfigMap doesn't
@@ -172,10 +189,17 @@ def update_config_map(data: dict, name, namespace):
             LOGGER.exception("Error calling read_namespaced_config_map")
 
             # ConfigMap doesn't exist yet
-            if err.status == ERR_NOT_FOUND:
+            if err.status != ERR_NOT_FOUND:
+                raise   # unrecoverable
+            if name == MAIN_CONFIG_MAP:
+                # If main ConfigMap is not found wait until it is available
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again", namespace, name)
-                continue
-            raise  # unrecoverable
+            else:
+                # If product ConfigMap is not available then create
+                LOGGER.info("Product ConfigMap %s/%s doesn't exist, attempting to create", namespace, name)
+                if not create_config_map(api_instance, name, namespace):
+                    raise   # unrecoverable
+            continue
 
         # Determine if ConfigMap needs to be updated
         config_map_data = response.data or {}  # if no ConfigMap data exists
@@ -243,13 +267,16 @@ def update_config_map(data: dict, name, namespace):
             else:
                 LOGGER.exception("Error calling replace_namespaced_config_map")
 
+    if attempt == retries:
+        LOGGER.error("Exceeded number of attempts; Not updating ConfigMap %s/%s.", namespace, name)
+
 
 def main():
     """ Main function """
     configure_logging()
     LOGGER.info(
         "Updating ConfigMap=%s in namespace=%s for product/version=%s/%s",
-        CONFIG_MAP, CONFIG_MAP_NAMESPACE, PRODUCT, PRODUCT_VERSION
+        MAIN_CONFIG_MAP, CONFIG_MAP_NAMESPACE, PRODUCT, PRODUCT_VERSION
     )
 
     if SET_ACTIVE_VERSION and REMOVE_ACTIVE_FIELD:
@@ -283,7 +310,20 @@ def main():
     if VALIDATE_SCHEMA:
         validate_schema(data)
 
-    update_config_map(data, CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+    product_config_map = format_product_cm_name(MAIN_CONFIG_MAP, PRODUCT)
+
+    LOGGER.debug("Splitting cray-product-catalog data")
+    main_cm_data, prod_cm_data = split_catalog_data(data)
+
+    if prod_cm_data and product_config_map == '':
+        LOGGER.error("Not updating ConfigMaps because the provided product name is invalid: '%s'", PRODUCT)
+        raise SystemExit(1)
+
+    update_config_map(main_cm_data, MAIN_CONFIG_MAP, CONFIG_MAP_NAMESPACE)
+
+    # If product_config_map is not an empty string and prod_cm_data is not an empty dict
+    if prod_cm_data:
+        update_config_map(prod_cm_data, product_config_map, CONFIG_MAP_NAMESPACE)
 
 
 if __name__ == "__main__":

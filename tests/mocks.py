@@ -26,6 +26,7 @@ Mock data for ProductCatalog and InstalledProductVersion unit tests
 """
 
 from yaml import safe_dump
+import datetime
 
 from cray_product_catalog.query import InstalledProductVersion
 
@@ -218,14 +219,6 @@ MOCK_PRODUCTS = \
      for version in OTHER_PRODUCT_VERSION.keys()]
 
 
-class Name:
-    """Class to hold ConfigMap name."""
-
-    def __init__(self):
-        """Initialize ConfigMap name"""
-        self.name = "cray-product-catalog"
-
-
 class MockInvalidYaml:
     """Mock class created to test test_create_product_catalog_invalid_product_data."""
 
@@ -235,3 +228,105 @@ class MockInvalidYaml:
         self.data = {
             'sat': '\t',
         }
+
+
+class Name:
+    """
+    Class to provide dummy metadata object with name and resource_version
+    """
+    def __init__(self):
+        """Initialize ConfigMap name and resoource_version"""
+        self.name = 'cray-product-catalog'
+        self.resource_version = 1
+
+
+# Helper variables for catalog_data_helper: Start
+YAML_DATA = """
+  active: false
+  component_versions:
+    docker:
+    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
+      version: 1.11.1
+    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
+      version: 1.3.2
+    helm:
+    - name: cray-uan-install
+      version: 1.11.1
+    repositories:
+    - members:
+      - uan-2.6.0-sle-15sp4
+      name: uan-2.6-sle-15sp4
+      type: group
+    manifests:
+    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml
+  configuration:
+    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
+    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
+    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
+    import_date: 2023-04-12 14:31:40.364230
+    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
+    images:
+      cray-application-sles15sp4.x86_64-0.5.19:
+        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
+
+YAML_DATA_MISSING_PROD_CM_DATA = """
+  active: false
+  configuration:
+    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git
+    commit: 6a5f52dfbfe7ea1a5f8ea5079c50995112c17025
+    import_branch: cray/uan/2.6.0-rc.1-3-gcc65df9
+    import_date: 2023-04-12 14:31:40.364230
+    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git
+    images:
+      cray-application-sles15sp4.x86_64-0.5.19:
+        id: 8159f93f-7e18-4875-a8a8-b0fb83c48f07"""
+
+YAML_DATA_MISSING_MAIN_DATA = """
+  component_versions:
+    docker:
+    - name: artifactory.algol60.net/uan-docker/stable/cray-uan-config
+      version: 1.11.1
+    - name: artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update
+      version: 1.3.2
+    helm:
+    - name: cray-uan-install
+      version: 1.11.1
+    repositories:
+    - members:
+      - uan-2.6.0-sle-15sp4
+      name: uan-2.6-sle-15sp4
+      type: group
+    manifests:
+    - config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml"""
+
+MAIN_CM_DATA = {
+    'active': False,
+    'configuration':
+    {
+        'clone_url': 'https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/uan-config-management.git',
+        'commit': '6a5f52dfbfe7ea1a5f8ea5079c50995112c17025',
+        'import_branch': 'cray/uan/2.6.0-rc.1-3-gcc65df9',
+        'import_date': datetime.datetime(2023, 4, 12, 14, 31, 40, 364230),
+        'ssh_url': 'git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/uan-config-management.git',
+        'images': {'cray-application-sles15sp4.x86_64-0.5.19': {'id': '8159f93f-7e18-4875-a8a8-b0fb83c48f07'}}
+    }
+}
+
+PROD_CM_DATA = {
+    'component_versions':
+    {
+        'docker': [
+            {'name': 'artifactory.algol60.net/uan-docker/stable/cray-uan-config', 'version': '1.11.1'},
+            {'name': 'artifactory.algol60.net/csm-docker/stable/cray-product-catalog-update', 'version': '1.3.2'}
+        ],
+        'helm': [
+            {'name': 'cray-uan-install', 'version': '1.11.1'}
+        ],
+        'repositories': [
+            {'members': ['uan-2.6.0-sle-15sp4'], 'name': 'uan-2.6-sle-15sp4', 'type': 'group'}
+        ],
+        'manifests': ['config-data/argo/loftsman/uan/2.6.0-rc.1/manifests/uan.yaml']
+    }
+}
+
+# Helper variables for catalog_data_helper: End

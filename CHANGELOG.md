@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CASM-4350: To address the 1MiB size limit of Kubernetes ConfigMaps, the 
+  `cray-product-catalog` Kubernetes ConfigMap is split into multiple smaller
+  ConfigMaps with each product's `component_versions` data in its own ConfigMap.
+  Modify the `catalog_update.py` script to update data across these ConfigMaps.
 - CASM-4427: Implement a prototype to have granular query from main and sub ConfigMaps
 - CASM-3981: Add S3 artifacts and Loftsman manifests to the Product Catalog schema
 - CASM-4368: Delete Cray Product Catalog details from main and sub ConfigMaps for a particular
