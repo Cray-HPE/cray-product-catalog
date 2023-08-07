@@ -30,3 +30,5 @@ PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE = 'services'
 COMPONENT_VERSIONS_PRODUCT_MAP_KEY = 'component_versions'
 COMPONENT_REPOS_KEY = 'repositories'
 COMPONENT_DOCKER_KEY = 'docker'
+CONFIG_MAP_FIELDS = {'configuration', 'images', 'recipes'}
+PRODUCT_CM_FIELDS = {'component_versions'}
