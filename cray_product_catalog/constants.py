@@ -33,3 +33,5 @@ COMPONENT_DOCKER_KEY = 'docker'
 COMPONENT_HELM = 'helm'
 COMPONENT_S3 = 's3'
 COMPONENT_MANIFESTS = 'manifests'
+CONFIG_MAP_FIELDS = {'configuration', 'images', 'recipes'}
+PRODUCT_CM_FIELDS = {'component_versions'}
