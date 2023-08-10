@@ -140,7 +140,7 @@ def create_config_map(api_instance, name, namespace):
     """Create new product ConfigMap."""
     try:
         new_cm = V1ConfigMap()
-        new_cm.metadata = V1ObjectMeta(name=name)
+        new_cm.metadata = V1ObjectMeta(name=name, labels={"type": "cray-product-catalog"})
         api_instance.create_namespaced_config_map(
             namespace=namespace, body=new_cm
         )
