@@ -139,8 +139,9 @@ def active_field_exists(product_data):
 def create_config_map(api_instance, name, namespace):
     """Create new product ConfigMap."""
     try:
+        product_catalog_config_map_label = {"type": MAIN_CONFIG_MAP}
         new_cm = V1ConfigMap()
-        new_cm.metadata = V1ObjectMeta(name=name, labels={"type": "cray-product-catalog"})
+        new_cm.metadata = V1ObjectMeta(name=name, labels=product_catalog_config_map_label)
         api_instance.create_namespaced_config_map(
             namespace=namespace, body=new_cm
         )
