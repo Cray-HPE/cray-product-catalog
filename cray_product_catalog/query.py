@@ -96,7 +96,9 @@ class ProductCatalog:
         self.namespace = namespace
         self.k8s_client = self._get_k8s_api()
         try:
-            configmaps = self.k8s_client.list_namespaced_config_map(namespace, label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL).items
+            configmaps = self.k8s_client.list_namespaced_config_map(
+                namespace, label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL
+            ).items
         except MaxRetryError as err:
             raise ProductCatalogError(
                 f'Unable to connect to Kubernetes to read {namespace} namespace: {err}'
