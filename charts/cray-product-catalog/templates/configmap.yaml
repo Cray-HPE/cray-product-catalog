@@ -25,4 +25,3 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cray-product-catalog
-data: null
