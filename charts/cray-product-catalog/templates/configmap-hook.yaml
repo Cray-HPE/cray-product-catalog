@@ -43,10 +43,16 @@ spec:
         command: ["/bin/sh"]
         args:
           - "-c"
-          - "kubectl get cm -n services cpc-backup -o yaml |
-              yq eval '.metadata.name = \"cray-product-catalog\"' - |
-              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f - && kubectl delete cm -n services cpc-backup"
+          - "for config_map in `kubectl get cm  -n services -l type=cray-product-catalog |
+            grep cpc-backup | cut -d' ' -f1` ;
+            do
+              restore_config_map_name=`echo ${config_map/cpc-backup/cray-product-catalog}`;
+              kubectl get cm -n services ${config_map} -o yaml |
+              yq eval \".metadata.name = \"${restore_config_map_name}\"\" - |
+              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations,
+              .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
+              kubectl apply -f - && kubectl delete cm -n services ${config_map}
+            done"
 
 ---
 apiVersion: batch/v1
@@ -70,7 +76,13 @@ spec:
         command: ["/bin/sh"]
         args:
           - "-c"
-          - "kubectl get cm -n services cray-product-catalog -o yaml |
-              yq eval '.metadata.name = \"cpc-backup\"' - |
-              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f -"
+          - "for config_map in `kubectl get cm  -n services -l type=cray-product-catalog |
+            cut -d' ' -f1 | tail -n  +2`;
+            do
+              backup_config_map_name=`echo ${config_map/cray-product-catalog/cpc-backup}`;
+              kubectl get cm -n services ${config_map} -o yaml |
+              yq eval \".metadata.name = \"${restore_config_map_name}\"\" - |
+              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations,
+              .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
+              kubectl apply -f -
+            done"

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new argument `max_attempts` to `modify_config_map` function in
   [`catalog_delete.py`](cray_product_catalog/catalog_delete.py), because we need not retry 100
   times when read ConfigMap fails for a product ConfigMap.
+- CASM-4511: Backup and Restore all ConfigMaps with label "type=cray-product-catalog"  
 
 ### Dependencies
 
