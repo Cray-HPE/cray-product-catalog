@@ -65,6 +65,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = logging.getLogger(__name__)
 
+CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
+
 # kubernetes API response code
 ERR_NOT_FOUND = 404
 ERR_CONFLICT = 409
@@ -264,6 +266,9 @@ def modify_config_map(name, namespace, product, product_version, key=None, max_a
             if err.status == ERR_NOT_FOUND and attempt < max_attempts:
                 LOGGER.warning("ConfigMap %s/%s doesn't exist, attempting again.", namespace, name)
                 continue
+            elif err.status == ERR_NOT_FOUND and name != CONFIG_MAP:
+                LOGGER.info("Product %s doesn't have respective product ConfigMap %s/%s", product, namespace, name)
+                break
             raise  # unrecoverable
 
         # Determine if ConfigMap needs to be updated
@@ -335,7 +340,6 @@ def main():
     PRODUCT = os.environ.get("PRODUCT").strip()  # required
     PRODUCT_VERSION = os.environ.get("PRODUCT_VERSION").strip()  # required
     CONFIG_MAP_NS = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
-    CONFIG_MAP = os.environ.get("CONFIG_MAP", "cray-product-catalog").strip()
     PRODUCT_CONFIG_MAP = format_product_cm_name(CONFIG_MAP, PRODUCT)
     KEY = os.environ.get("KEY", "").strip() or None
 
