@@ -43,7 +43,7 @@ from cray_product_catalog.constants import (
     COMPONENT_VERSIONS_PRODUCT_MAP_KEY,
     PRODUCT_CATALOG_CONFIG_MAP_NAME,
     PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-    PRODUCT_CATALOG_CONFIG_MAP_LABEL
+    PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 )
 from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util import load_k8s
@@ -97,7 +97,7 @@ class ProductCatalog:
         self.k8s_client = self._get_k8s_api()
         try:
             configmaps = self.k8s_client.list_namespaced_config_map(
-                namespace, label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL
+                namespace, label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
             ).items
         except MaxRetryError as err:
             raise ProductCatalogError(

@@ -37,7 +37,8 @@ from cray_product_catalog.query import (
     InstalledProductVersion,
     ProductCatalogError
 )
-from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL
+
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 
 from tests.mocks import (
     COS_VERSIONS, SAT_VERSIONS, CPE_VERSION, MOCK_PRODUCT_CATALOG_DATA,
@@ -90,7 +91,7 @@ class TestProductCatalog(unittest.TestCase):
         """Assert the product catalog was created as expected."""
         product_catalog = ProductCatalog('cray-product-catalog', 'mock-namespace')
         self.mock_k8s_api.list_namespaced_config_map.assert_called_once_with(
-            'mock-namespace', label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL
+            'mock-namespace', label_selector=PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
         )
         return product_catalog
 
