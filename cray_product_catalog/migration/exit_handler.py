@@ -94,8 +94,8 @@ class ExitHandler:
             if not self.k8api.delete_config_map(name=config_map, namespace=CONFIG_MAP_NAMESPACE):
                 non_deleted_product_config_maps.append(config_map)
 
-        if len(non_deleted_product_config_maps) > 0:  # checking if any product config map is not deteled
-            LOGGER.error("Error in deleting ConfigMaps %s. Delete these manually", non_deleted_product_config_maps)
+        if len(non_deleted_product_config_maps) > 0:  # checking if any product config map is not deleted
+            LOGGER.error("Error in deleting ConfigMap/s %s. Delete this/these manually", non_deleted_product_config_maps)
             return
 
         LOGGER.info("rollback successful")

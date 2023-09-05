@@ -24,25 +24,23 @@ File contains unit test classes for validating exit handler cases.
 """
 
 import unittest
-from unittest import mock
+from unittest.mock import patch, call
 
-from cray_product_catalog.migration.exit_handler import _is_product_config_map
-
-
-class MockKubernetesApi:
-    def delete_config_map(self, name, namespace):
-        return True
-
+from cray_product_catalog.migration import CONFIG_MAP_TEMP, CONFIG_MAP_NAMESPACE
+from cray_product_catalog.migration.exit_handler import _is_product_config_map, ExitHandler
 
 
 class TestExitHandler(unittest.TestCase):
     """unittest class for Data catalog ConfigMap deletion logic"""
 
     def setUp(self) -> None:
-        self.mock_k8api = mock.patch('cray_product_catalog.migration.exit_handler.KubernetesApi').start()
+        self.mock_k8api_del = patch(
+            'cray_product_catalog.migration.exit_handler.KubernetesApi.delete_config_map').start()
+        self.mock_k8api_list = patch(
+            'cray_product_catalog.migration.exit_handler.KubernetesApi.list_config_map').start()
 
     def tearDown(self) -> None:
-        mock.patch.stopall()
+        patch.stopall()
 
     def test_product_config_map_pattern(self):
         """Test cases for checking all valid patterns of product config map"""
@@ -68,10 +66,57 @@ class TestExitHandler(unittest.TestCase):
         for invalid_pattern in invalid_patterns:
             self.assertFalse(_is_product_config_map(invalid_pattern))
 
+    def test_rollback_failure_from_temp_config_map_deletion(self):
+        """Validating the scenario where temp config map is not deleted"""
 
+        with self.assertLogs() as captured:
+            self.mock_k8api_del.return_value = False
 
-    def test_rollback_failure_from_temp_config_map(self):
-        self.mock_k8api.return_value
+            dummy_products = ["cray-product-catalog-cos", "cray-product-catalog-sma"]
+            self.mock_k8api_list.return_value = dummy_products
+            eh = ExitHandler()
+            eh.rollback()
+            # Verify the exact log message from last return
+            self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap {CONFIG_MAP_TEMP}. "
+                                                                f"Delete this manually along with these {dummy_products}")
 
-# mock the API
-# test the roll back
+    def test_rollback_failure_from_product_config_map_deletion(self):
+        """Validating the scenario where one of the product config map is not deleted"""
+
+        with self.assertLogs() as captured:
+            self.mock_k8api_del.side_effect = [True, True, False]  # delete is called three times
+
+            dummy_products = ["cray-product-catalog-cos", "cray-product-catalog-sma"]
+            self.mock_k8api_list.return_value = dummy_products
+            eh = ExitHandler()
+            eh.rollback()
+            # Verify the exact log message from last return
+            self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap/s {[dummy_products[-1]]}."
+                                                                f" Delete this/these manually")
+
+    def test_rollback_all_success(self):
+        """Validating the scenario of successful rollback"""
+
+        with self.assertLogs() as captured:
+            self.mock_k8api_del.return_value = True  # delete is called three times
+
+            dummy_products = ["cray-product-catalog-cos", "cray-product-catalog-sma"]
+            self.mock_k8api_list.return_value = dummy_products
+            eh = ExitHandler()
+            eh.rollback()
+            # Verify the exact log message from last return
+            self.assertEqual(captured.records[-1].getMessage(), "rollback successful")
+
+            # three calls in sequence for complete flow
+            self.mock_k8api_del.assert_has_calls(calls=[
+                call(
+                    name=CONFIG_MAP_TEMP,
+                    namespace=CONFIG_MAP_NAMESPACE),
+                call(
+                    name=dummy_products[0],
+                    namespace=CONFIG_MAP_NAMESPACE),
+                call(
+                    name=dummy_products[1],
+                    namespace=CONFIG_MAP_NAMESPACE),
+                ]
+            )

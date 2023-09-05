@@ -23,7 +23,7 @@
 File defines few constants
 """
 
-from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_NAME
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 from re import compile
 
 # ConfigMap name for temporary many config map
@@ -33,7 +33,7 @@ CONFIG_MAP_TEMP = "cray-product-catalog-temp"
 CONFIG_MAP_NAMESPACE = "service"
 
 # config map names
-CRAY_DATA_CATALOG_LABEL = f"type={PRODUCT_CATALOG_CONFIG_MAP_NAME}"
+CRAY_DATA_CATALOG_LABEL = PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 
 # product ConfigMap pattern
 PRODUCT_CONFIG_MAP_PATTERN = compile('^(cray-product-catalog)-([a-z0-9.-]+)$')
