@@ -1,5 +1,6 @@
 # (C) Copyright 2023 Hewlett Packard Enterprise Development LP
 
+import logging
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.client.api_client import ApiClient
@@ -7,14 +8,22 @@ from kubernetes.client.models.v1_config_map import V1ConfigMap
 from kubernetes.client.models.v1_object_meta import V1ObjectMeta
 from urllib3.util.retry import Retry
 from urllib3.exceptions import MaxRetryError
-import logging
 from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.util.k8s import load_k8s
 from . import retry_count
+# retry_count=10
+
+# from kubernetes import configs
+# def load_k8s():
+#     """ Load Kubernetes configuration """
+#     try:
+#         config.load_incluster_config()
+#     except Exception:
+#         config.load_kube_config()
 
 
 class KubernetesApi:
-
+    """Class for wrapping Kubernetes api"""
     def __init__(self):
         configure_logging()
         self.logger = logging.getLogger(__name__)
@@ -57,8 +66,8 @@ class KubernetesApi:
 
     def list_config_map(self, namespace, label):
         """ Reads all the Config Map with certain label in particular namespace
-        :param Str namespace: Value of namespace from where config map has to be listed
-        :param Dict label: Dictionary of label key:value
+        :param str namespace: Value of namespace from where config map has to be listed
+        :param str label: string format of label "type=xyz"
         :return: V1ConfigMapList
                  If there is any error, returns None
         """
@@ -115,18 +124,21 @@ class KubernetesApi:
         :param str rename_from: Name of Config Map to rename
         :param str rename_to: Name of Config Map to be renamed to
         :param str namespace: namespace in which Config Map has to be updated
+        :param dict label: label of config map to be renamed
         :return: bool, If Success True else False
         """
 
-        if not self.delete_config_map(rename_to, namespace):
-            return False
+        self.delete_config_map(rename_to, namespace)
+
         try:
             response = self.api_instance.read_namespaced_config_map(rename_from, namespace)
+        except MaxRetryError as err:
+            self.logger.exception('MaxRetryError - Error: {0}'.format(err))
+            return False
         except ApiException as err:
             self.logger.exception("ApiException- Error:{0}".format(err))
             return False
         else:
-            self.delete_config_map(rename_to, namespace)
             self.create_config_map(response.data, rename_to, namespace, label)
             self.delete_config_map(rename_from, namespace)
             return True
@@ -145,20 +157,33 @@ class KubernetesApi:
         role_api_instance = client.api.rbac_authorization_v1_api.RbacAuthorizationV1Api()
         try:
             role = role_api_instance.read_namespaced_role(name, namespace)
+        except MaxRetryError as err:
+            self.logger.exception('MaxRetryError - Error: {0}'.format(err))
+            return False
         except ApiException as err:
             self.logger.exception('ApiException in read_namespaced_role - Error:{0}'.format(err))
             return False
 
+        patch_needed = False
         if is_grant:
-            if action not in role.rules.verbs:
-                role.rules.verbs.append(action)
+            if action not in role.rules[0].verbs:
+                role.rules[0].verbs.append(action)
+                patch_needed = True
         else:
-            if action in role.rules.verbs:
-                role.rules.verbs.remove(action)
+            if action in role.rules[0].verbs:
+                role.rules[0].verbs.remove(action)
+                patch_needed = True
+
+        if not patch_needed:
+            return True
 
         try:
             role_api_instance.patch_namespaced_role(name, namespace, role)
             return True
+        except MaxRetryError as err:
+            self.logger.exception('MaxRetryError - Error: {0}'.format(err))
+            return False
         except ApiException as err:
             self.logger.exception('ApiException patch_namespaced_role - Error:{0}'.format(err))
             return False
+
