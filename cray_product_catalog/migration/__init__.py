@@ -37,3 +37,6 @@ CRAY_DATA_CATALOG_LABEL = PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 
 # product ConfigMap pattern
 PRODUCT_CONFIG_MAP_PATTERN = compile('^(cray-product-catalog)-([a-z0-9.-]+)$')
+
+retry_count = 10
+role_name = 'cray-product-catalog'
