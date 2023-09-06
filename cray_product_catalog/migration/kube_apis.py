@@ -154,20 +154,36 @@ class KubernetesApi:
         :return: bool, If Success True else False
         """
 
-        self.delete_config_map(rename_to, namespace)
+        self.k8s_obj.delete_config_map(rename_to, namespace)
+        attempt = 0
+        del_failed = False
 
-        try:
-            response = self.api_instance.read_namespaced_config_map(rename_from, namespace)
-        except MaxRetryError as err:
-            self.logger.exception('MaxRetryError - Error: {0}'.format(err))
-            return False
-        except ApiException as err:
-            self.logger.exception("ApiException- Error:{0}".format(err))
-            return False
-        else:
-            self.create_config_map(response.data, rename_to, namespace, label)
-            self.delete_config_map(rename_from, namespace)
-            return True
+        while attempt < 10:
+            attempt += 1
+            response = self.read_config_map(rename_from, namespace)
+            if not response:
+                self.logger.info("Failed to read ConfigMap %s, retrying..", rename_from)
+                continue
+            if self.create_config_map(response.data, rename_to, namespace, label):
+                if self.delete_config_map(rename_from, namespace):
+                    return True
+                else:
+                    self.logger.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    del_failed = True
+                    break
+            else:
+                self.logger.info("Failed to create ConfigMap %s, retrying..", rename_to)
+                continue
+        # Since only delete of backed up ConfigMap failed, retrying only delete operation
+        if del_failed:
+            while attempt < 10:
+                attempt += 1
+                if self.delete_config_map(rename_from, namespace):
+                    return True
+                else:
+                    self.logger.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    continue
+        return False
 
     def update_role_permission(self, name, namespace, action: str, is_grant: bool):
         """Updates specific role for permission

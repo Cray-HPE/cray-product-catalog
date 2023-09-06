@@ -38,8 +38,9 @@ from cray_product_catalog.util.catalog_data_helper import split_catalog_data, fo
 from cray_product_catalog.migration.kube_apis import KubernetesApi
 from cray_product_catalog.constants import (
         PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-        PRODUCT_CATALOG_CONFIG_MAP_LABEL, PRODUCT_CATALOG_CONFIG_MAP_REPLICA
+        PRODUCT_CATALOG_CONFIG_MAP_LABEL
     )
+from cray_product_catalog.migration import CONFIG_MAP_TEMP
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,15 +62,13 @@ class ConfigMapDataHandler:
             product_name = list(product_data.keys())[0]
             LOGGER.debug("Creating ConfigMap for product %s", product_name)
             prod_cm_name = format_product_cm_name(PRODUCT_CATALOG_CONFIG_MAP_NAME, product_name)
-            try:
-                if self.k8s_obj.create_config_map(prod_cm_name, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, product_data,
-                                            PRODUCT_CATALOG_CONFIG_MAP_LABEL):
-                    LOGGER.debug("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
-                else:
-                    LOGGER.info("Calling rollback handler")
-            except ApiException:
-                LOGGER.error("Error calling create_namespaced_config_map, exiting with rollback action")
-                LOGGER.info("Calling rollback handler")
+
+            if self.k8s_obj.create_config_map(prod_cm_name, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, product_data,
+                                        PRODUCT_CATALOG_CONFIG_MAP_LABEL):
+                LOGGER.debug("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+                return True
+            LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+            return False
 
     def create_temp_config_map(self, config_map_data):
         """Create temporary main ConfigMap `cray-product-catalog-temp`
@@ -77,29 +76,15 @@ class ConfigMapDataHandler:
         Args:
             config_map_data (dict): Data to be stored in the ConfigMap `cray-product-catalog-temp`
         """
-        try:
-            if self.k8s_obj.create_config_map(PRODUCT_CATALOG_CONFIG_MAP_REPLICA,
-                                              PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                                              config_map_data, PRODUCT_CATALOG_CONFIG_MAP_LABEL):
-                LOGGER.DEBUG("Created temp ConfigMap %s/%s",
-                             PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_REPLICA)
-            else:
-                LOGGER.info("Create ConfigMap failed, Calling rollback handler")
-        except ApiException:
-            LOGGER.error("Error calling create_namespaced_config_map, exiting with rollback action")
-            LOGGER.info("Calling rollback handler")
 
-    def create_main_config_map(self):
-        """Create main ConfigMap `cray-product-catalog` using the data in
-        `cray-product-catalog-temp`"""
-        while True:
-            try:
-                self.k8s_obj.rename_config_map(PRODUCT_CATALOG_CONFIG_MAP_REPLICA,
-                                        PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
-                LOGGER.info("Migration successful")
-                break
-            except ApiException:
-                LOGGER.warning("Failed to rename, retrying...")
+        if self.k8s_obj.create_config_map(CONFIG_MAP_TEMP,
+                                            PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                            config_map_data, PRODUCT_CATALOG_CONFIG_MAP_LABEL):
+            LOGGER.debug("Created temp ConfigMap %s/%s",
+                            PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
+            return True
+        LOGGER.info("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
+        return False
 
     def read_config_map_data(self):
         """Read main ConfigMap data
@@ -108,20 +93,12 @@ class ConfigMapDataHandler:
             {Dictionary}: data reperesenting the ConfigMap output
 
         """
-        try:
-            response = self.k8s_obj.read_config_map(PRODUCT_CATALOG_CONFIG_MAP_NAME,
-                                                    PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
-            if response:
-                return response.data
-            LOGGER.info("No data available so exiting...")
-            raise SystemExit(1)
-        except ApiException as err:
-            LOGGER.exception("Error calling read_namespaced_config_map")
-            if err.status == 404:
-                LOGGER.error("ConfigMap %s/%s doesn't exist, exiting data migration",
-                        PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_NAME)
-            LOGGER.info("Calling rollback handler")
-            raise SystemExit(1)
+
+        response = self.k8s_obj.read_config_map(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                                PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
+        if response:
+            return response.data
+        return None
 
     def migrate_config_map_data(self, config_map_data):
         """Migrate cray-product-catalog ConfigMap data to multiple product ConfigMaps with
