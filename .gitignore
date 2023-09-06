@@ -5,3 +5,11 @@ dist/
 
 # VS Code config
 workspace.code-workspace
+
+
+# cache specific
+*.pyc
+**__pycache__**
+
+# removing pycharm specific
+.idea
