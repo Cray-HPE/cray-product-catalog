@@ -145,46 +145,6 @@ class KubernetesApi:
             self.logger.exception('ApiException- Error:{0}'.format(err))
             return False
 
-    def rename_config_map(self, rename_from, rename_to, namespace, label):
-        """ Renaming is actually deleting one Config Map and then updating the name of other Config Map and patch it.
-        :param str rename_from: Name of Config Map to rename
-        :param str rename_to: Name of Config Map to be renamed to
-        :param str namespace: namespace in which Config Map has to be updated
-        :param dict label: label of config map to be renamed
-        :return: bool, If Success True else False
-        """
-
-        self.k8s_obj.delete_config_map(rename_to, namespace)
-        attempt = 0
-        del_failed = False
-
-        while attempt < 10:
-            attempt += 1
-            response = self.read_config_map(rename_from, namespace)
-            if not response:
-                self.logger.info("Failed to read ConfigMap %s, retrying..", rename_from)
-                continue
-            if self.create_config_map(response.data, rename_to, namespace, label):
-                if self.delete_config_map(rename_from, namespace):
-                    return True
-                else:
-                    self.logger.info("Failed to delete ConfigMap %s, retrying..", rename_from)
-                    del_failed = True
-                    break
-            else:
-                self.logger.info("Failed to create ConfigMap %s, retrying..", rename_to)
-                continue
-        # Since only delete of backed up ConfigMap failed, retrying only delete operation
-        if del_failed:
-            while attempt < 10:
-                attempt += 1
-                if self.delete_config_map(rename_from, namespace):
-                    return True
-                else:
-                    self.logger.info("Failed to delete ConfigMap %s, retrying..", rename_from)
-                    continue
-        return False
-
     def update_role_permission(self, name, namespace, action: str, is_grant: bool):
         """Updates specific role for permission
         :param str name: name of role to be updated

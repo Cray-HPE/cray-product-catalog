@@ -40,29 +40,37 @@ def main():
     """Main function"""
     LOGGER.info("Migrating %s ConfigMap data to multiple product ConfigMaps", PRODUCT_CATALOG_CONFIG_MAP_NAME)
     config_map_obj = ConfigMapDataHandler()
+    exit_handler = ExitHandler()
     response = config_map_obj.k8s_obj.read_config_map(
         PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
         )
-    if response:
+    if response and response.data:
         config_map_data = response.data
     else:
         LOGGER.info("Error reading ConfigMap, exiting migration process...")
         raise SystemExit(1)
-    main_config_map_data, product_config_map_data_list = config_map_obj.migrate_config_map_data(config_map_data)
-    eh = ExitHandler()
+
+    try:
+        main_config_map_data, product_config_map_data_list = config_map_obj.migrate_config_map_data(config_map_data)
+    except Exception:
+        LOGGER.error("Failed to split ConfigMap Data, exiting migration process...")
+        raise SystemExit(1)
+
     # Create ConfigMaps for each product with `component_versions` data
     if not config_map_obj.create_product_config_maps(product_config_map_data_list):
         LOGGER.info("Calling rollback handler...")
-        eh.rollback()
+        exit_handler.rollback()
+        raise SystemExit(1)
     # Create temporary main ConfigMap with all data except `component_versions` for all products
     if not config_map_obj.create_temp_config_map(main_config_map_data):
         LOGGER.info("Calling rollback handler...")
-        eh.rollback()
+        exit_handler.rollback()
+        raise SystemExit(1)
 
     LOGGER.info("Renaming %s ConfigMap name to %s ConfigMap",
                 CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
     #Creating main ConfigMap `cray-product-catalog` using the data in `cray-product-catalog-temp`
-    if config_map_obj.k8s_obj.rename_config_map(
+    if config_map_obj.rename_config_map(
         CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME,
         PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_LABEL
     ):
@@ -70,7 +78,7 @@ def main():
     else:
         LOGGER.info("Renaming %s to %s ConfigMap failed, calling rollback handler...",
                     CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
-        eh.rollback()
+        exit_handler.rollback()
 
 
 if __name__ == "__main__":

@@ -63,12 +63,12 @@ class ConfigMapDataHandler:
             LOGGER.debug("Creating ConfigMap for product %s", product_name)
             prod_cm_name = format_product_cm_name(PRODUCT_CATALOG_CONFIG_MAP_NAME, product_name)
 
-            if self.k8s_obj.create_config_map(prod_cm_name, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, product_data,
+            if not self.k8s_obj.create_config_map(prod_cm_name, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, product_data,
                                         PRODUCT_CATALOG_CONFIG_MAP_LABEL):
-                LOGGER.debug("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
-                return True
-            LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
-            return False
+                LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+                return False
+            LOGGER.debug("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+        return True
 
     def create_temp_config_map(self, config_map_data):
         """Create temporary main ConfigMap `cray-product-catalog-temp`
@@ -85,20 +85,6 @@ class ConfigMapDataHandler:
             return True
         LOGGER.info("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
         return False
-
-    def read_config_map_data(self):
-        """Read main ConfigMap data
-
-        Returns:
-            {Dictionary}: data reperesenting the ConfigMap output
-
-        """
-
-        response = self.k8s_obj.read_config_map(PRODUCT_CATALOG_CONFIG_MAP_NAME,
-                                                PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
-        if response:
-            return response.data
-        return None
 
     def migrate_config_map_data(self, config_map_data):
         """Migrate cray-product-catalog ConfigMap data to multiple product ConfigMaps with
@@ -143,5 +129,47 @@ class ConfigMapDataHandler:
             if main_versions_data:
                 config_map_data[product] = yaml.safe_dump( main_versions_data, default_flow_style=False)
             else:
-                config_map_data[product] = ""
+                config_map_data[product] = ''
         return config_map_data, product_config_map_data_list
+
+    def rename_config_map(self, rename_from, rename_to, namespace, label):
+        """ Renaming is actually deleting one Config Map and then updating the name of other Config Map and patch it.
+        :param str rename_from: Name of Config Map to rename
+        :param str rename_to: Name of Config Map to be renamed to
+        :param str namespace: namespace in which Config Map has to be updated
+        :param dict label: label of config map to be renamed
+        :return: bool, If Success True else False
+        """
+
+        self.k8s_obj.delete_config_map(rename_to, namespace)
+        attempt = 0
+        del_failed = False
+
+        while attempt < 10:
+            attempt += 1
+            response = self.k8s_obj.read_config_map(rename_from, namespace)
+            if not response:
+                LOGGER.info("Failed to read ConfigMap %s, retrying..", rename_from)
+                continue
+            if self.k8s_obj.create_config_map(response.data, rename_to, namespace, label):
+                if self.k8s_obj.delete_config_map(rename_from, namespace):
+                    return True
+                else:
+                    LOGGER.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    del_failed = True
+                    break
+            else:
+                LOGGER.info("Failed to create ConfigMap %s, retrying..", rename_to)
+                continue
+        # Since only delete of backed up ConfigMap failed, retrying only delete operation
+        if del_failed:
+            while attempt < 10:
+                attempt += 1
+                if self.k8s_obj.delete_config_map(rename_from, namespace):
+                    return True
+                else:
+                    LOGGER.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    continue
+            # Returning success as migration is successful only backed up ConfigMap is not deleted.
+            return True
+        return False
