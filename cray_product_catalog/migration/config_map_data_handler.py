@@ -67,7 +67,7 @@ class ConfigMapDataHandler:
                                         PRODUCT_CATALOG_CONFIG_MAP_LABEL):
                 LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
                 return False
-            LOGGER.debug("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+            LOGGER.info("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
         return True
 
     def create_temp_config_map(self, config_map_data):
@@ -80,7 +80,7 @@ class ConfigMapDataHandler:
         if self.k8s_obj.create_config_map(CONFIG_MAP_TEMP,
                                             PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
                                             config_map_data, PRODUCT_CATALOG_CONFIG_MAP_LABEL):
-            LOGGER.debug("Created temp ConfigMap %s/%s",
+            LOGGER.info("Created temp ConfigMap %s/%s",
                             PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
             return True
         LOGGER.info("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
