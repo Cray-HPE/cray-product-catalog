@@ -83,7 +83,7 @@ class ConfigMapDataHandler:
             LOGGER.info("Created temp ConfigMap %s/%s",
                             PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
             return True
-        LOGGER.info("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
+        LOGGER.error("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
         return False
 
     def migrate_config_map_data(self, config_map_data):
@@ -149,17 +149,19 @@ class ConfigMapDataHandler:
             attempt += 1
             response = self.k8s_obj.read_config_map(rename_from, namespace)
             if not response:
-                LOGGER.info("Failed to read ConfigMap %s, retrying..", rename_from)
+                LOGGER.error("Failed to read ConfigMap %s, retrying..", rename_from)
                 continue
-            if self.k8s_obj.create_config_map(response.data, rename_to, namespace, label):
+            cm_data = response.data
+            if self.k8s_obj.create_config_map(cm_data, rename_to, namespace, label):
                 if self.k8s_obj.delete_config_map(rename_from, namespace):
+                    LOGGER.info("Renaming ConfigMap successful")
                     return True
                 else:
-                    LOGGER.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    LOGGER.error("Failed to delete ConfigMap %s, retrying..", rename_from)
                     del_failed = True
                     break
             else:
-                LOGGER.info("Failed to create ConfigMap %s, retrying..", rename_to)
+                LOGGER.error("Failed to create ConfigMap %s, retrying..", rename_to)
                 continue
         # Since only delete of backed up ConfigMap failed, retrying only delete operation
         if del_failed:
@@ -168,8 +170,9 @@ class ConfigMapDataHandler:
                 if self.k8s_obj.delete_config_map(rename_from, namespace):
                     return True
                 else:
-                    LOGGER.info("Failed to delete ConfigMap %s, retrying..", rename_from)
+                    LOGGER.error("Failed to delete ConfigMap %s, retrying..", rename_from)
                     continue
             # Returning success as migration is successful only backed up ConfigMap is not deleted.
+            LOGGER.info("Renaming ConfigMap successful")
             return True
         return False
