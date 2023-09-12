@@ -125,7 +125,7 @@ class ProductCatalog:
             str(p) for p in self.products if not p.is_valid
         ]
         if invalid_products:
-            LOGGER.debug(
+            LOGGER.warning(
                 'The following products have product catalog data that is not valid against the expected schema: %s',
                 ", ".join(invalid_products)
             )

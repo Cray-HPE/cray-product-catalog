@@ -141,7 +141,9 @@ class ConfigMapDataHandler:
         :return: bool, If Success True else False
         """
 
-        self.k8s_obj.delete_config_map(rename_to, namespace)
+        if not self.k8s_obj.delete_config_map(rename_to, namespace):
+            logging.error("Failed to delete ConfigMap %s", rename_to)
+            return False
         attempt = 0
         del_failed = False
 
@@ -152,7 +154,8 @@ class ConfigMapDataHandler:
                 LOGGER.error("Failed to read ConfigMap %s, retrying..", rename_from)
                 continue
             cm_data = response.data
-            if self.k8s_obj.create_config_map(cm_data, rename_to, namespace, label):
+
+            if self.k8s_obj.create_config_map(rename_to, namespace, cm_data, label):
                 if self.k8s_obj.delete_config_map(rename_from, namespace):
                     LOGGER.info("Renaming ConfigMap successful")
                     return True

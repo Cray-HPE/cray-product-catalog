@@ -101,13 +101,35 @@ class KubernetesApi:
             self.logger.info("Either label or namespace is empty, not reading config map.")
             return None
         try:
-            return self.api_instance.list_namespaced_config_map(namespace, label_selector=label)
+            return self.api_instance.list_namespaced_config_map(namespace, label_selector=label).items
         except MaxRetryError as err:
             self.logger.exception('MaxRetryError - Error: {0}'.format(err))
             return None
         except ApiException as err:
             self.logger.exception('ApiException- Error:{0}'.format(err))
             return None
+
+    def list_config_map_names(self, namespace, label):
+        """ Reads all the Config Map with certain label in particular namespace
+        :param str namespace: Value of namespace from where config map has to be listed
+        :param str label: string format of label "type=xyz"
+        :return: [str]
+        """
+        cm_output = self.list_config_map(namespace, label)
+
+        list_cm_names = []
+
+        if not cm_output:
+            return list_cm_names
+
+        # parse the output to get only names
+        for cm in cm_output:
+            try:
+                list_cm_names.append(cm.metadata.name)
+            except Exception:
+                continue
+
+        return list_cm_names
 
     def read_config_map(self, name, namespace):
         """Reads config Map based on provided name and namespace

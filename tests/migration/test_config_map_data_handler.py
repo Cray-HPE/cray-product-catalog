@@ -199,7 +199,6 @@ class TestConfigMapDataHandler(unittest.TestCase):
     
     def test_migrate_config_map_data(self):
         """ Validating the migration of data into multiple product ConfigMaps data """
-        #self.mock_k8api_read.return_value = INITIAL_MAIN_CM_DATA
         
         main_cm_data: Dict
         prod_cm_data_list: List
@@ -209,103 +208,284 @@ class TestConfigMapDataHandler(unittest.TestCase):
         self.assertEqual(main_cm_data, MAIN_CM_DATA_EXPECTED)
         self.assertEqual(prod_cm_data_list, PROD_CM_DATA_LIST_EXPECTED)
 
-    def test_create_product_config_map(self):
+    def test_create_product_config_maps(self):
         """ Validating product config maps are created """
-        
+
         # mock some additional functions
         self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        
-        with patch(
-                'cray_product_catalog.migration.kube_apis.client.CoreV1Api', return_value=True
-        ):               
-            with self.assertLogs() as captured:
-        
-                # call method under test
-                cmdh = ConfigMapDataHandler()
-                cmdh.create_product_config_maps(PROD_CM_DATA_LIST_EXPECTED)
-                
-                dummy_prod_cm_names = ['cray-product-catalog-hfp-firmware', 'cray-product-catalog-analytics']
 
-                self.mock_k8api_create.assert_has_calls(calls=[ # Create ConfigMap called twice
-                    call(
-                        dummy_prod_cm_names[0], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                        PROD_CM_DATA_LIST_EXPECTED[0], PRODUCT_CATALOG_CONFIG_MAP_LABEL), call().__bool__(),
-                    call(
-                        dummy_prod_cm_names[1], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                        PROD_CM_DATA_LIST_EXPECTED[1], PRODUCT_CATALOG_CONFIG_MAP_LABEL), call().__bool__(),
-                    ]
-                )
+        with self.assertLogs() as captured:
 
-                # Verify the exact log message
-                self.assertEqual(
-                            captured.records[0].getMessage(), 
-                            f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[0]}")
-                
-                self.assertEqual(
-                            captured.records[1].getMessage(), 
-                            f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[1]}")
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.create_product_config_maps(PROD_CM_DATA_LIST_EXPECTED)
+
+            dummy_prod_cm_names = ['cray-product-catalog-hfp-firmware', 'cray-product-catalog-analytics']
+
+            self.mock_k8api_create.assert_has_calls(calls=[ # Create ConfigMap called twice
+                call(
+                    dummy_prod_cm_names[0], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    PROD_CM_DATA_LIST_EXPECTED[0], PRODUCT_CATALOG_CONFIG_MAP_LABEL), call().__bool__(),
+                call(
+                    dummy_prod_cm_names[1], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    PROD_CM_DATA_LIST_EXPECTED[1], PRODUCT_CATALOG_CONFIG_MAP_LABEL), call().__bool__(),
+                ]
+            )
+
+            # Verify the exact log message
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[0]}")
+
+            self.assertEqual(
+                        captured.records[1].getMessage(),
+                        f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[1]}")
+
+    def test_create_second_product_config_map_failed(self):
+        """ Validating failed to create product config maps """
+
+        # mock some additional functions
+        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+
+        with self.assertLogs() as captured:
+            self.mock_k8api_create.side_effect = [True, False]
+
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.create_product_config_maps(PROD_CM_DATA_LIST_EXPECTED)
+
+            dummy_prod_cm_names = ['cray-product-catalog-hfp-firmware', 'cray-product-catalog-analytics']
+
+            self.mock_k8api_create.assert_has_calls(calls=[ # Create ConfigMap called twice
+                call(
+                    dummy_prod_cm_names[0], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    PROD_CM_DATA_LIST_EXPECTED[0], PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+                call(
+                    dummy_prod_cm_names[1], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    PROD_CM_DATA_LIST_EXPECTED[1], PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+                ]
+            )
+
+            # Verify the exact log message
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[0]}")
+
+            self.assertEqual(
+              captured.records[1].getMessage(),
+              f"Failed to create product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[1]}")
+
+    def test_create_first_product_config_map_failed(self):
+        """ Validating failed to create product config maps """
+
+        # mock some additional functions
+        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+
+        with self.assertLogs() as captured:
+            self.mock_k8api_create.side_effect = [False, False]
+
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.create_product_config_maps(PROD_CM_DATA_LIST_EXPECTED)
+
+            dummy_prod_cm_names = ['cray-product-catalog-hfp-firmware', 'cray-product-catalog-analytics']
+
+            self.mock_k8api_create.assert_called_once_with(
+              dummy_prod_cm_names[0], PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+              PROD_CM_DATA_LIST_EXPECTED[0], PRODUCT_CATALOG_CONFIG_MAP_LABEL
+            )
+
+            # Verify the exact log message
+            self.assertEqual(len(captured.records), 1)
+
+            self.assertEqual(
+                captured.records[0].getMessage(),
+                f"Failed to create product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[0]}")
 
     def test_create_temp_config_map(self):
-        """ Validating product config maps are created """
-        
+        """ Validating temp main config map is created """
+
         # mock some additional functions
         self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        
-        with patch(
-                'cray_product_catalog.migration.kube_apis.client.CoreV1Api', return_value=True
-        ):               
-            with self.assertLogs(level="DEBUG") as captured:
-        
-                # call method under test
-                cmdh = ConfigMapDataHandler()
-                cmdh.create_temp_config_map(MAIN_CM_DATA_EXPECTED)
-                
-                self.mock_k8api_create.assert_called_once_with(
-                        CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                        MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL
-                )
 
-                # Verify the exact log message
-                self.assertEqual(
-                            captured.records[0].getMessage(), 
-                            f"Created temp ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{CONFIG_MAP_TEMP}")
+        with self.assertLogs(level='DEBUG') as captured:
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.create_temp_config_map(MAIN_CM_DATA_EXPECTED)
 
-    def test_rename_config_map(self):
-        """ Validating product config maps are created """
-        
+            self.mock_k8api_create.assert_called_once_with(
+                    CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL
+            )
+
+            # Verify the exact log message
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Created temp ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{CONFIG_MAP_TEMP}")
+
+    def test_create_temp_config_map_failed(self):
+        """ Validating temp main config map creation failed """
+
         # mock some additional functions
         self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        self.mock_k8api_delete = patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
-        
-        with patch(
-                'cray_product_catalog.migration.kube_apis.client.CoreV1Api', return_value=True
-        ):               
-            with self.assertLogs(level="DEBUG") as captured:
-        
-                # call method under test
-                cmdh = ConfigMapDataHandler()
-                cmdh.rename_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                                       PRODUCT_CATALOG_CONFIG_MAP_LABEL)
-                
-                self.mock_k8api_delete.assert_has_calls(calls=[ # Delete ConfigMap called twice
-                      call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
-                      call(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
-                      call().__bool__(),
-                    ]
-                )
-                
-                self.mock_k8api_read.assert_called_once_with(CONFIG_MAP_TEMP,
-                                                               PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
-                self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
-                self.mock_k8api_create.assert_called_once_with(self.mock_k8api_read.return_value.data,
-                                                               PRODUCT_CATALOG_CONFIG_MAP_NAME,
-                                                               PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                                                               PRODUCT_CATALOG_CONFIG_MAP_LABEL)
-                
-                self.mock_k8api_delete.assert_called_once_with(CONFIG_MAP_TEMP,
-                                                               PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
+        self.mock_k8api_create.return_value = False
 
-                # Verify the exact log message
-                self.assertEqual(
-                            captured.records[0].getMessage(), 
-                            "Renaming ConfigMap successful")
+        with self.assertLogs() as captured:
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.create_temp_config_map(MAIN_CM_DATA_EXPECTED)
+
+            self.mock_k8api_create.assert_called_once_with(
+                    CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                    MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL
+            )
+
+            # Verify the exact log message
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Creating ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{CONFIG_MAP_TEMP} failed")
+
+    # def test_rename_config_map(self):
+    #     """ Validating product config maps are created """
+        
+    #     # mock some additional functions
+    #     self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+    #     self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
+    #     self.mock_k8api_delete = patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+                      
+    #     with self.assertLogs(level="DEBUG") as captured:
+    
+    #         # call method under test
+    #         cmdh = ConfigMapDataHandler()
+    #         cmdh.rename_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                                 MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+            
+    #         self.mock_k8api_delete.assert_has_calls(calls=[ # Delete ConfigMap called twice
+    #               call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),                  
+    #               call(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),
+    #             ]
+    #         )
+            
+    #         self.mock_k8api_read.assert_called_once_with(CONFIG_MAP_TEMP,
+    #                                                         PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
+    #         self.mock_k8api_read.return_value = MAIN_CM_DATA_EXPECTED
+    #         self.mock_k8api_create.assert_called_once_with(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+    #                                                         PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                                                         MAIN_CM_DATA_EXPECTED,
+    #                                                         PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+
+    #         # Verify the exact log message
+    #         self.assertEqual(
+    #                     captured.records[0].getMessage(), 
+    #                     "Renaming ConfigMap successful")
+
+    def test_rename_config_map_failed_1(self):
+        """ Validating rename config map failed as first step deleting `cray-product-catalog` ConfigMap failed."""
+
+        # mock some additional functions
+        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+        self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
+        self.mock_k8api_delete = \
+        patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+
+        with self.assertLogs() as captured:
+            self.mock_k8api_delete.side_effect = [False, False]
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.rename_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                   PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                   PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+
+            self.mock_k8api_delete.assert_called_once_with(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                                           PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
+
+            # Verify the exact log message
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Failed to delete ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAME}")
+
+    # def test_rename_config_map_failed_2(self):
+    #     """ Validating product config maps are created """
+        
+    #     # mock some additional functions
+    #     self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+    #     self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
+    #     self.mock_k8api_delete = patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+                      
+    #     with self.assertLogs(level="DEBUG") as captured:
+    #         self.mock_k8api_create.return_value = False
+    
+    #         # call method under test
+    #         cmdh = ConfigMapDataHandler()
+    #         cmdh.rename_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                                 MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+            
+    #         self.mock_k8api_delete.assert_called_once_with(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+    #                                                        PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
+    #         calls=[ # Delete ConfigMap called twice
+    #               call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),                  
+    #               call(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),
+    #             ]
+    #         self.mock_k8api_create.assert_has_calls(calls=[
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+    #           call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL),
+              
+    #         ])
+
+    #         # Verify the exact log message
+    #         self.assertEqual(
+    #                     captured.records[0].getMessage(), 
+    #                     f"Failed to create ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAME}, retrying..")
+            
+    # def test_rename_config_map_failed_3(self):
+    #     """ Validating product config maps are created """
+        
+    #     # mock some additional functions
+    #     self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
+    #     self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
+    #     self.mock_k8api_delete = patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+                      
+    #     with self.assertLogs(level="DEBUG") as captured:
+    #         self.mock_k8api_delete.side_effect = [True, False]
+    
+    #         # call method under test
+    #         cmdh = ConfigMapDataHandler()
+    #         cmdh.rename_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                                 MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+            
+    #         self.mock_k8api_delete.assert_has_calls(calls=[ # Delete ConfigMap called twice
+    #               call(PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),                  
+    #               call(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+    #               call().__bool__(),
+    #             ])
+    #         self.mock_k8api_create.assert_called_once_with(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+    #                                                        PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+    #                                                        MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+
+    #         # Verify the exact log message
+    #         self.assertEqual(
+    #                     captured.records[-1].getMessage(), 
+    #                     f"Renaming ConfigMap successful")

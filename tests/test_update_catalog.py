@@ -56,7 +56,7 @@ class TestCatalogUpdate(unittest.TestCase):
         name = "cos"
         namespace = "product"
         self.mock_v1configmap.metadata = None
-        with self.assertLogs(level='DEBUG') as captured:
+        with self.assertLogs() as captured:
             # call method under test
             create_config_map(ApiInstance(raise_exception=False), name, namespace)
             self.assertEqual(len(captured.records), 1)  # check that there is only one log message

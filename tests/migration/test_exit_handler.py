@@ -26,14 +26,19 @@ File contains unit test classes for validating exit handler cases.
 import unittest
 from unittest.mock import patch, call
 
-from cray_product_catalog.migration import CONFIG_MAP_TEMP, CONFIG_MAP_NAMESPACE
+from cray_product_catalog.migration import CONFIG_MAP_TEMP
 from cray_product_catalog.migration.exit_handler import _is_product_config_map, ExitHandler
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
 
 
 class TestExitHandler(unittest.TestCase):
     """unittest class for Data catalog ConfigMap deletion logic"""
 
     def setUp(self) -> None:
+        self.mock_load_k8s_mig = patch('cray_product_catalog.migration.kube_apis.load_k8s').start()
+        self.mock_corev1api_mig = patch('cray_product_catalog.migration.kube_apis.client.CoreV1Api').start()
+        self.mock_ApiClient_mig = patch('cray_product_catalog.migration.kube_apis.ApiClient').start()
+
         self.mock_k8api_del = patch(
             'cray_product_catalog.migration.exit_handler.KubernetesApi.delete_config_map').start()
         self.mock_k8api_list = patch(
@@ -111,12 +116,12 @@ class TestExitHandler(unittest.TestCase):
             self.mock_k8api_del.assert_has_calls(calls=[
                 call(
                     name=CONFIG_MAP_TEMP,
-                    namespace=CONFIG_MAP_NAMESPACE),
+                    namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
                 call(
                     name=dummy_products[0],
-                    namespace=CONFIG_MAP_NAMESPACE),
+                    namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
                 call(
                     name=dummy_products[1],
-                    namespace=CONFIG_MAP_NAMESPACE),
+                    namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
                 ]
             )

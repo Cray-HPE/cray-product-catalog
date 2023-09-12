@@ -31,8 +31,9 @@ from typing import List
 from re import fullmatch
 
 
-from cray_product_catalog.migration import CONFIG_MAP_TEMP, CONFIG_MAP_NAMESPACE, CRAY_DATA_CATALOG_LABEL, \
+from cray_product_catalog.migration import CONFIG_MAP_TEMP, CRAY_DATA_CATALOG_LABEL, \
     PRODUCT_CONFIG_MAP_PATTERN
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
 from cray_product_catalog.migration.kube_apis import KubernetesApi
 
 LOGGER = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class ExitHandler:
         cm_name = filter(_is_product_config_map,
                          self.k8api.list_config_map(
                              label=CRAY_DATA_CATALOG_LABEL,
-                             namespace=CONFIG_MAP_NAMESPACE)
+                             namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
                          )
         return list(cm_name)
 
@@ -82,7 +83,7 @@ class ExitHandler:
         product_config_maps = self.__get_all_created_product_config_maps()  # collecting product config map
 
         LOGGER.info("deleting ConfigMap %s", CONFIG_MAP_TEMP)  # attempting to delete temp config map
-        if not self.k8api.delete_config_map(name=CONFIG_MAP_TEMP, namespace=CONFIG_MAP_NAMESPACE):
+        if not self.k8api.delete_config_map(name=CONFIG_MAP_TEMP, namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE):
             LOGGER.error("Error in deleting ConfigMap %s. Delete this manually along with these %s",
                          CONFIG_MAP_TEMP, product_config_maps)
             return
@@ -91,7 +92,7 @@ class ExitHandler:
         non_deleted_product_config_maps = []
         for config_map in product_config_maps:
             LOGGER.debug("deleting Product ConfigMap %s", config_map)
-            if not self.k8api.delete_config_map(name=config_map, namespace=CONFIG_MAP_NAMESPACE):
+            if not self.k8api.delete_config_map(name=config_map, namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE):
                 non_deleted_product_config_maps.append(config_map)
 
         if len(non_deleted_product_config_maps) > 0:  # checking if any product config map is not deleted
