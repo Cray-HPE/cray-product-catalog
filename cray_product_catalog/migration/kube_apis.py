@@ -63,7 +63,7 @@ class KubernetesApi:
         self.kclient.rest_client.pool_manager.connection_pool_kw['retries'] = retry
         self.api_instance = client.CoreV1Api(self.kclient)
 
-    def create_config_map(self, data, name, namespace, label):
+    def create_config_map(self, name, namespace, data, label):
         """Creates Config Map
         :param dict data: Content of configmap
         :param str name: config map name to be created
