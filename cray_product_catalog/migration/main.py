@@ -79,6 +79,7 @@ def main():
         LOGGER.info("Renaming %s to %s ConfigMap failed, calling rollback handler...",
                     CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
         exit_handler.rollback()
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

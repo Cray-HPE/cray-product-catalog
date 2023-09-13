@@ -167,11 +167,12 @@ class ConfigMapDataHandler:
                 LOGGER.error("Failed to create ConfigMap %s, retrying..", rename_to)
                 continue
         # Since only delete of backed up ConfigMap failed, retrying only delete operation
+        attempt = 0
         if del_failed:
             while attempt < 10:
                 attempt += 1
                 if self.k8s_obj.delete_config_map(rename_from, namespace):
-                    return True
+                    break
                 else:
                     LOGGER.error("Failed to delete ConfigMap %s, retrying..", rename_from)
                     continue

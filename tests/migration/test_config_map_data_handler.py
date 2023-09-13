@@ -34,6 +34,7 @@ from kubernetes.config import ConfigException
 from kubernetes import client
 from kubernetes.client.api_client import ApiClient
 
+from cray_product_catalog.migration.main import main
 from cray_product_catalog.migration.config_map_data_handler import ConfigMapDataHandler
 from cray_product_catalog.migration.kube_apis import KubernetesApi
 from cray_product_catalog.constants import (
@@ -176,6 +177,10 @@ PROD_CM_DATA_LIST_EXPECTED = [
       key: Analytics/Cray-Analytics.x86_64-1.4.20.squashfs\n"""
     }
 ]
+
+def mock_split_catalog_data():
+    """Mocking function to return custom data"""
+    return MAIN_CM_DATA_EXPECTED, PROD_CM_DATA_LIST_EXPECTED
 
 
 class TestConfigMapDataHandler(unittest.TestCase):
@@ -348,10 +353,6 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_rename_config_map(self):
         """ Validating product config maps are created """
 
-        # mock some additional functions
-        # self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        # self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
-
         with self.assertLogs(level="DEBUG") as captured:
             # call method under test
             self.mock_k8api_delete.return_value = True
@@ -385,13 +386,8 @@ class TestConfigMapDataHandler(unittest.TestCase):
                 "Renaming ConfigMap successful")
 
     def test_rename_config_map_failed_1(self):
-        """ Validating rename config map failed as first step deleting `cray-product-catalog` ConfigMap failed."""
-
-        # mock some additional functions
-        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
-        self.mock_k8api_delete = \
-            patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+        """ Validating rename config map failure scenario where:
+            deleting cray-product-catalog ConfigMap failed. """
 
         with self.assertLogs() as captured:
             self.mock_k8api_delete.side_effect = [False, False]
@@ -410,13 +406,8 @@ class TestConfigMapDataHandler(unittest.TestCase):
                 f"Failed to delete ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAME}")
 
     def test_rename_config_map_failed_2(self):
-        """ Validating product config maps are created """
-
-        # mock some additional functions
-        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
-        self.mock_k8api_delete = patch(
-            'cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+        """ Validating rename config map failure scenario where:
+            creating cray-product-catalog ConfigMap failed. """
 
         with self.assertLogs(level="DEBUG") as captured:
             self.mock_k8api_create.return_value = False
@@ -469,12 +460,8 @@ class TestConfigMapDataHandler(unittest.TestCase):
                 f"Failed to create ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAME}, retrying..")
 
     def test_rename_config_map_failed_3(self):
-        """ Validating product config maps are created """
-
-        # mock some additional functions
-        self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
-        self.mock_v1configmap_mig = patch('cray_product_catalog.migration.kube_apis.V1ConfigMap').start()
-        self.mock_k8api_delete = patch('cray_product_catalog.migration.config_map_data_handler.KubernetesApi.delete_config_map').start()
+        """ Validating rename config map failure scenario where:
+            first operation of deleting cray-product-catalog-temp ConfigMap failed but later passed. """
 
         with self.assertLogs(level="DEBUG") as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -500,6 +487,258 @@ class TestConfigMapDataHandler(unittest.TestCase):
                                                            MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
 
             # Verify the exact log message
+            self.assertEqual(2, len(captured.records))
+            self.assertEqual(
+                        captured.records[0].getMessage(),
+                        f"Failed to delete ConfigMap {CONFIG_MAP_TEMP}, retrying..")
+            self.assertEqual(
+                        captured.records[1].getMessage(),
+                        f"Renaming ConfigMap successful")
+
+    def test_rename_config_map_failed_4(self):
+        """ Validating rename config map failure scenario where:
+            everytime deleting cray-product-catalog-temp ConfigMap failed. """
+
+        with self.assertLogs(level="DEBUG") as captured:
+            self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+            self.mock_k8api_delete.side_effect = [True, False, False, False, False, False, False, False,
+                                                  False, False, False, False]
+
+            # call method under test
+            cmdh = ConfigMapDataHandler()
+            cmdh.rename_config_map(CONFIG_MAP_TEMP,
+                                   PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                   PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                   PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+
+            self.mock_k8api_delete.assert_has_calls(calls=[
+                  call(
+                      PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                      PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+                  call(
+                      CONFIG_MAP_TEMP,
+                      PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
+                ])
+            self.mock_k8api_create.assert_called_once_with(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                                           PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                                           MAIN_CM_DATA_EXPECTED, PRODUCT_CATALOG_CONFIG_MAP_LABEL)
+
+            # Verify the exact log message
+            self.assertEqual(12, len(captured.records))
+            self.assertEqual(
+                        captured.records[-2].getMessage(),
+                        f"Failed to delete ConfigMap {CONFIG_MAP_TEMP}, retrying..")
             self.assertEqual(
                         captured.records[-1].getMessage(),
                         f"Renaming ConfigMap successful")
+
+    def test_main_for_successful_migration(self):
+        """Validating that migration is successful"""
+        self.mock_migrate_config_map = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+          ).start()
+        self.mock_create_prod_cms = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+          ).start()
+        self.mock_create_temp_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+          ).start()
+        self.mock_rename_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+          ).start()
+
+        with self.assertLogs(level="DEBUG") as captured:
+            self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+            self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+            self.mock_create_prod_cms.return_value = True
+            self.mock_create_temp_cm.return_value = True
+            self.mock_rename_cm.return_value = True
+
+            # Call method under test
+            main()
+
+            self.assertEqual(
+                        captured.records[-1].getMessage(),
+                        f"Migration successful")
+
+    def test_main_failed_1(self):
+      """Validating that migration failed as renaming failed"""
+
+      self.mock_migrate_config_map = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+        ).start()
+      self.mock_create_prod_cms = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+        ).start()
+      self.mock_create_temp_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+        ).start()
+      self.mock_rename_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+        ).start()
+
+      with self.assertRaises(SystemExit) as captured:
+        self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+        self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+        self.mock_create_prod_cms.return_value = True
+        self.mock_create_temp_cm.return_value = True
+        self.mock_rename_cm.return_value = False
+
+        # Call method under test
+        main()
+
+        self.assertTrue(
+          "Renaming cray-product-catalog-temp to cray-product-catalog ConfigMap failed, calling rollback handler..." in captured.exception
+        )
+
+        self.assertTrue(
+          "rollback successful" in captured.exception
+        )
+
+    def test_main_failed_2(self):
+      """Validating that migration failed as create temp cm failed"""
+
+      self.mock_migrate_config_map = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+        ).start()
+      self.mock_create_prod_cms = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+        ).start()
+      self.mock_create_temp_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+        ).start()
+      self.mock_rename_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+        ).start()
+
+      with self.assertRaises(SystemExit) as captured:
+        self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+        self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+        self.mock_create_prod_cms.return_value = True
+        self.mock_create_temp_cm.return_value = False
+
+        # Call method under test
+        main()
+
+        self.assertTrue(
+          "rollback successful" in captured.exception
+        )
+
+        self.mock_rename_cm.assert_not_called()
+
+    def test_main_failed_3(self):
+      """Validating that migration failed as create product config maps failed"""
+
+      self.mock_migrate_config_map = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+        ).start()
+      self.mock_create_prod_cms = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+        ).start()
+      self.mock_create_temp_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+        ).start()
+      self.mock_rename_cm = \
+        patch(
+          'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+        ).start()
+
+      with self.assertRaises(SystemExit) as captured:
+        self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+        self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+        self.mock_create_prod_cms.return_value = False
+
+        # Call method under test
+        main()
+
+        self.assertTrue(
+          "rollback successful" in captured.exception
+        )
+
+        self.mock_create_temp_cm.assert_not_called()
+        self.mock_rename_cm.assert_not_called()
+
+    def test_main_failed_4(self):
+        """Validating that migration failed as migrate_config_map failed with exception"""
+
+        self.mock_migrate_config_map = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+          ).start()
+        self.mock_create_prod_cms = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+          ).start()
+        self.mock_create_temp_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+          ).start()
+        self.mock_rename_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+          ).start()
+
+        with self.assertRaises(SystemExit) as captured:
+          self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
+          self.mock_migrate_config_map.return_value = Exception()
+
+          # Call method under test
+          main()
+
+          self.assertTrue(
+            "Failed to split ConfigMap Data, exiting migration process..." in captured.exception
+          )
+
+          self.mock_create_prod_cms.assert_not_called()
+          self.mock_create_temp_cm.assert_not_called()
+          self.mock_rename_cm.assert_not_called()
+
+    def test_main_failed_6(self):
+        """Validating that migration failed as read_config_map returned empty response / data."""
+
+        self.mock_migrate_config_map = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+          ).start()
+        self.mock_create_prod_cms = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+          ).start()
+        self.mock_create_temp_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+          ).start()
+        self.mock_rename_cm = \
+          patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+          ).start()
+
+        with self.assertRaises(SystemExit) as captured:
+          self.mock_k8api_read.return_value = Mock(data="")
+
+          # Call method under test
+          main()
+
+          self.assertTrue(
+            "Error reading ConfigMap, exiting migration process..." in captured.exception
+          )
+
+          self.mock_migrate_config_map.assert_not_called()
+          self.mock_create_prod_cms.assert_not_called()
+          self.mock_create_temp_cm.assert_not_called()
+          self.mock_rename_cm.assert_not_called()
