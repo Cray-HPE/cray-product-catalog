@@ -55,6 +55,7 @@ from cray_product_catalog.schema.validate import validate
 from cray_product_catalog.util.k8s import load_k8s
 from cray_product_catalog.util.merge_dict import merge_dict
 from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -140,7 +141,7 @@ def create_config_map(api_instance, name, namespace):
     """Create new product ConfigMap."""
     try:
         new_cm = V1ConfigMap()
-        new_cm.metadata = V1ObjectMeta(name=name)
+        new_cm.metadata = V1ObjectMeta(name=name, labels=PRODUCT_CATALOG_CONFIG_MAP_LABEL)
         api_instance.create_namespaced_config_map(
             namespace=namespace, body=new_cm
         )
