@@ -83,7 +83,8 @@ class TestExitHandler(unittest.TestCase):
             eh.rollback()
             # Verify the exact log message from last return
             self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap {CONFIG_MAP_TEMP}. "
-                                                                f"Delete this manually along with these {dummy_products}")
+                                                                f"Delete this manually along with these "
+                                                                f"{dummy_products}")
 
     def test_rollback_failure_from_product_config_map_deletion(self):
         """Validating the scenario where one of the product config map is not deleted"""
@@ -96,8 +97,8 @@ class TestExitHandler(unittest.TestCase):
             eh = ExitHandler()
             eh.rollback()
             # Verify the exact log message from last return
-            self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap/s {[dummy_products[-1]]}."
-                                                                f" Delete this/these manually")
+            self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap/s "
+                             f"{[dummy_products[-1]]}. Delete this/these manually")
 
     def test_rollback_all_success(self):
         """Validating the scenario of successful rollback"""

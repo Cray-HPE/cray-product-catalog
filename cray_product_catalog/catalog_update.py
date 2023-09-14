@@ -145,7 +145,7 @@ def create_config_map(api_instance, name, namespace):
         api_instance.create_namespaced_config_map(
             namespace=namespace, body=new_cm
         )
-        LOGGER.info("Created product ConfigMap %s/%s", namespace, name) 
+        LOGGER.info("Created product ConfigMap %s/%s", namespace, name)
         return True
     except ApiException:
         LOGGER.error("Error calling create_namespaced_config_map")

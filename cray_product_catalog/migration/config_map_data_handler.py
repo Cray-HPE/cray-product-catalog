@@ -44,6 +44,7 @@ from cray_product_catalog.migration import CONFIG_MAP_TEMP
 
 LOGGER = logging.getLogger(__name__)
 
+
 class ConfigMapDataHandler:
     """ Class to migrate ConfigMap data to multiple ConfigMaps """
 
@@ -64,8 +65,9 @@ class ConfigMapDataHandler:
             prod_cm_name = format_product_cm_name(PRODUCT_CATALOG_CONFIG_MAP_NAME, product_name)
 
             if not self.k8s_obj.create_config_map(prod_cm_name, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, product_data,
-                                        PRODUCT_CATALOG_CONFIG_MAP_LABEL):
-                LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
+                                                  PRODUCT_CATALOG_CONFIG_MAP_LABEL):
+                LOGGER.info("Failed to create product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                            prod_cm_name)
                 return False
             LOGGER.info("Created product ConfigMap %s/%s", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, prod_cm_name)
         return True
@@ -77,11 +79,10 @@ class ConfigMapDataHandler:
             config_map_data (dict): Data to be stored in the ConfigMap `cray-product-catalog-temp`
         """
 
-        if self.k8s_obj.create_config_map(CONFIG_MAP_TEMP,
-                                            PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-                                            config_map_data, PRODUCT_CATALOG_CONFIG_MAP_LABEL):
+        if self.k8s_obj.create_config_map(CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                          config_map_data, PRODUCT_CATALOG_CONFIG_MAP_LABEL):
             LOGGER.info("Created temp ConfigMap %s/%s",
-                            PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
+                        PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
             return True
         LOGGER.error("Creating ConfigMap %s/%s failed", PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, CONFIG_MAP_TEMP)
         return False
@@ -121,13 +122,13 @@ class ConfigMapDataHandler:
                     main_versions_data[version_data] = main_cm_data
             # If `component_versions` data exists for a product, create new product config map
             if product_versions_data:
-                product_config_map_data[product] = yaml.safe_dump( product_versions_data, default_flow_style=False)
-                #create_product_config_map(k8s_obj, product, product_config_map_data)
+                product_config_map_data[product] = yaml.safe_dump(product_versions_data, default_flow_style=False)
+                # create_product_config_map(k8s_obj, product, product_config_map_data)
                 product_config_map_data_list.append(product_config_map_data)
             # Data with key other than `component_versions` should be updated to config_map_data,
             # so that new main ConfigMap will not have data with key `component_versions`
             if main_versions_data:
-                config_map_data[product] = yaml.safe_dump( main_versions_data, default_flow_style=False)
+                config_map_data[product] = yaml.safe_dump(main_versions_data, default_flow_style=False)
             else:
                 config_map_data[product] = ''
         return config_map_data, product_config_map_data_list

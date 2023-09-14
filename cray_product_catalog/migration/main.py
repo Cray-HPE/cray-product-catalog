@@ -36,6 +36,7 @@ from cray_product_catalog.migration.exit_handler import ExitHandler
 
 LOGGER = logging.getLogger(__name__)
 
+
 def main():
     """Main function"""
     LOGGER.info("Migrating %s ConfigMap data to multiple product ConfigMaps", PRODUCT_CATALOG_CONFIG_MAP_NAME)
@@ -69,7 +70,7 @@ def main():
 
     LOGGER.info("Renaming %s ConfigMap name to %s ConfigMap",
                 CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
-    #Creating main ConfigMap `cray-product-catalog` using the data in `cray-product-catalog-temp`
+    # Creating main ConfigMap `cray-product-catalog` using the data in `cray-product-catalog-temp`
     if config_map_obj.rename_config_map(
         CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME,
         PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_LABEL

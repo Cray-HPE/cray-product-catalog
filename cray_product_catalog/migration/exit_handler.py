@@ -96,8 +96,8 @@ class ExitHandler:
                 non_deleted_product_config_maps.append(config_map)
 
         if len(non_deleted_product_config_maps) > 0:  # checking if any product config map is not deleted
-            LOGGER.error("Error in deleting ConfigMap/s %s. Delete this/these manually", non_deleted_product_config_maps)
+            LOGGER.error("Error in deleting ConfigMap/s %s. Delete this/these manually",
+                         non_deleted_product_config_maps)
             return
 
         LOGGER.info("rollback successful")
-
