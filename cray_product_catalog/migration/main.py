@@ -42,6 +42,15 @@ def main():
     LOGGER.info("Migrating %s ConfigMap data to multiple product ConfigMaps", PRODUCT_CATALOG_CONFIG_MAP_NAME)
     config_map_obj = ConfigMapDataHandler()
     exit_handler = ExitHandler()
+    LOGGER.info("Revoking update permission from %s/%s",
+                PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_NAME)
+
+    if not config_map_obj.k8s_obj.update_role_permission(
+        PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, 'update', False
+    ):
+        LOGGER.error("Failed to revoke update permission, exiting migration process...")
+        raise SystemExit(1)
+
     response = config_map_obj.k8s_obj.read_config_map(
         PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
         )
@@ -49,23 +58,27 @@ def main():
         config_map_data = response.data
     else:
         LOGGER.info("Error reading ConfigMap, exiting migration process...")
+        config_map_obj.grant_update_permission()
         raise SystemExit(1)
 
     try:
         main_config_map_data, product_config_map_data_list = config_map_obj.migrate_config_map_data(config_map_data)
     except Exception:
         LOGGER.error("Failed to split ConfigMap Data, exiting migration process...")
+        config_map_obj.grant_update_permission()
         raise SystemExit(1)
 
     # Create ConfigMaps for each product with `component_versions` data
     if not config_map_obj.create_product_config_maps(product_config_map_data_list):
         LOGGER.info("Calling rollback handler...")
         exit_handler.rollback()
+        config_map_obj.grant_update_permission()
         raise SystemExit(1)
     # Create temporary main ConfigMap with all data except `component_versions` for all products
     if not config_map_obj.create_temp_config_map(main_config_map_data):
         LOGGER.info("Calling rollback handler...")
         exit_handler.rollback()
+        config_map_obj.grant_update_permission()
         raise SystemExit(1)
 
     LOGGER.info("Renaming %s ConfigMap name to %s ConfigMap",
@@ -80,7 +93,9 @@ def main():
         LOGGER.info("Renaming %s to %s ConfigMap failed, calling rollback handler...",
                     CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
         exit_handler.rollback()
+        config_map_obj.grant_update_permission()
         raise SystemExit(1)
+    config_map_obj.grant_update_permission()
 
 
 if __name__ == "__main__":

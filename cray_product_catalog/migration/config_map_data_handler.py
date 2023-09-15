@@ -40,7 +40,7 @@ from cray_product_catalog.constants import (
         PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
         PRODUCT_CATALOG_CONFIG_MAP_LABEL
     )
-from cray_product_catalog.migration import CONFIG_MAP_TEMP
+from cray_product_catalog.migration import CONFIG_MAP_TEMP, action
 
 LOGGER = logging.getLogger(__name__)
 
@@ -180,4 +180,29 @@ class ConfigMapDataHandler:
             # Returning success as migration is successful only backed up ConfigMap is not deleted.
             LOGGER.info("Renaming ConfigMap successful")
             return True
+        return False
+
+    def grant_update_permission(self):
+        """Grant update permission to `cray-product-catalog` ConfigMap before exiting
+
+        Args:
+            name (_type_): ConfigMap name
+            namespace (_type_): Namespace
+
+        Return:
+            bool: True (Success) or False (Failure)
+        """
+        attempt = 0
+        while attempt < 10:
+            attempt += 1
+            if not self.k8s_obj.update_role_permission(PRODUCT_CATALOG_CONFIG_MAP_NAME,
+                                                       PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
+                                                       action, True):
+                LOGGER.error("Failed to grant access, retrying...")
+                continue
+            LOGGER.info("Granted update permission to %s/%s",
+                        PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_NAME)
+            return True
+        LOGGER.error("Failed to grant update permission even after retrying for %s attempts, provide access manually",
+                     attempt)
         return False

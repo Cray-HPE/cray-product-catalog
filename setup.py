@@ -60,7 +60,8 @@ setup(
     entry_points={
         'console_scripts': [
             'catalog_delete=cray_product_catalog.catalog_delete:main',
-            'catalog_update=cray_product_catalog.catalog_update:main'
+            'catalog_update=cray_product_catalog.catalog_update:main',
+            'catalog_migrate=cray_product_catalog.migration.main:main',
         ]
     }
 )

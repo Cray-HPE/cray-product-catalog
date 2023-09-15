@@ -46,137 +46,9 @@ from tests.mock_update_catalog import (
     ApiInstance, ApiException
 )
 from cray_product_catalog.migration import CONFIG_MAP_TEMP
-
-YAML_DATA = """
-  HFP-firmware: |
-    22.10.2:
-      component_versions:
-        docker:
-        - name: cray-product-catalog-update
-          version: 0.1.3
-    23.01.1:
-      component_versions:
-        docker:
-        - name: cray-product-catalog-update
-          version: 0.1.3
-    23.1.2:
-      component_versions:
-        repositories:
-        - name: HFP-firmware-23.1.2
-          type: hosted
-        - members:
-          - HFP-firmware-23.1.2
-          name: HFP-firmware
-          type: group
-        - members:
-          - HFP-firmware-23.1.2
-          name: shasta-firmware
-          type: group
-  analytics: |
-    1.4.18:
-      component_versions:
-        s3:
-        - bucket: boot-images
-          key: Analytics/Cray-Analytics.x86_64-1.4.18.squashfs
-      configuration:
-        clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-        commit: 4f1aee2086b58b319d4a9ee167086004fca09e47
-        import_branch: cray/analytics/1.4.18
-        import_date: 2023-02-28 04:37:34.914586
-        ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git
-    1.4.20:
-      component_versions:
-        s3:
-        - bucket: boot-images
-          key: Analytics/Cray-Analytics.x86_64-1.4.20.squashfs
-      configuration:
-        clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-        commit: 8424f5f97f12a3403afc57ac55deca0dadc8f3dd
-        import_branch: cray/analytics/1.4.20
-        import_date: 2023-03-23 16:55:22.295666
-        ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git"""
-
-INITIAL_MAIN_CM_DATA = {
-    'HFP-firmware': """
-        22.10.2:
-            component_versions:
-                docker:
-                    - name: cray-product-catalog-update
-                      version: 0.1.3
-        23.01.1:
-            component_versions:
-                docker:
-                    - name: cray-product-catalog-update
-                      version: 0.1.3""",
-    'analytics': """
-        1.4.18:
-            component_versions:
-                s3:
-                - bucket: boot-images
-                  key: Analytics/Cray-Analytics.x86_64-1.4.18.squashfs
-            configuration:
-                clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-                commit: 4f1aee2086b58b319d4a9ee167086004fca09e47
-                import_branch: cray/analytics/1.4.18
-                import_date: 2023-02-28 04:37:34.914586
-                ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git
-        1.4.20:
-            component_versions:
-                s3:
-                - bucket: boot-images
-                  key: Analytics/Cray-Analytics.x86_64-1.4.20.squashfs
-            configuration:
-                clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-                commit: 8424f5f97f12a3403afc57ac55deca0dadc8f3dd
-                import_branch: cray/analytics/1.4.20
-                import_date: 2023-03-23 16:55:22.295666
-                ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git"""
-}
-
-MAIN_CM_DATA_EXPECTED = {
-    'HFP-firmware': '',
-    'analytics': """1.4.18:
-  configuration:
-    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-    commit: 4f1aee2086b58b319d4a9ee167086004fca09e47
-    import_branch: cray/analytics/1.4.18
-    import_date: 2023-02-28 04:37:34.914586
-    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git
-1.4.20:
-  configuration:
-    clone_url: https://vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net/vcs/cray/analytics-config-management.git
-    commit: 8424f5f97f12a3403afc57ac55deca0dadc8f3dd
-    import_branch: cray/analytics/1.4.20
-    import_date: 2023-03-23 16:55:22.295666
-    ssh_url: git@vcs.cmn.lemondrop.hpc.amslabs.hpecorp.net:cray/analytics-config-management.git\n"""
-}
-
-PROD_CM_DATA_LIST_EXPECTED = [
-    {
-        'HFP-firmware': """22.10.2:
-  component_versions:
-    docker:
-    - name: cray-product-catalog-update
-      version: 0.1.3
-23.01.1:
-  component_versions:
-    docker:
-    - name: cray-product-catalog-update
-      version: 0.1.3\n"""
-    },
-    {
-        'analytics': """1.4.18:
-  component_versions:
-    s3:
-    - bucket: boot-images
-      key: Analytics/Cray-Analytics.x86_64-1.4.18.squashfs
-1.4.20:
-  component_versions:
-    s3:
-    - bucket: boot-images
-      key: Analytics/Cray-Analytics.x86_64-1.4.20.squashfs\n"""
-    }
-]
+from tests.migration.migration_mock import (
+  MAIN_CM_DATA_EXPECTED, PROD_CM_DATA_LIST_EXPECTED, INITIAL_MAIN_CM_DATA
+)
 
 
 def mock_split_catalog_data():
@@ -248,7 +120,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
                 f"Created product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[1]}")
 
     def test_create_second_product_config_map_failed(self):
-        """ Validating failed to create product config maps """
+        """ Validating scenario where creation of second product ConfigMap failed """
 
         # mock some additional functions
         self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
@@ -282,7 +154,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
                 f"Failed to create product ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE}/{dummy_prod_cm_names[1]}")
 
     def test_create_first_product_config_map_failed(self):
-        """ Validating failed to create product config maps """
+        """ Validating scenario where creation of first product ConfigMap failed. """
 
         # mock some additional functions
         self.mock_v1_object_Meta_mig = patch('cray_product_catalog.migration.kube_apis.V1ObjectMeta').start()
@@ -535,22 +407,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
 
     def test_main_for_successful_migration(self):
         """Validating that migration is successful"""
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-            ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-            ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-            ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-            ).start()
+        ).start()
 
         with self.assertLogs(level="DEBUG") as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -569,22 +437,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_main_failed_1(self):
         """Validating that migration failed as renaming failed"""
 
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-            ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-            ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-            ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-            ).start()
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -608,22 +472,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_main_failed_2(self):
         """Validating that migration failed as create temp cm failed"""
 
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-            ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-            ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-            ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-            ).start()
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -643,22 +503,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_main_failed_3(self):
         """Validating that migration failed as create product config maps failed"""
 
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-            ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-            ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-            ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-            ).start()
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -678,22 +534,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_main_failed_4(self):
         """Validating that migration failed as migrate_config_map failed with exception"""
 
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-            ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-            ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-            ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-            ).start()
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.return_value = Mock(data=MAIN_CM_DATA_EXPECTED)
@@ -713,22 +565,18 @@ class TestConfigMapDataHandler(unittest.TestCase):
     def test_main_failed_6(self):
         """Validating that migration failed as read_config_map returned empty response / data."""
 
-        self.mock_migrate_config_map = \
-          patch(
+        self.mock_migrate_config_map = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
-          ).start()
-        self.mock_create_prod_cms = \
-          patch(
+        ).start()
+        self.mock_create_prod_cms = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
-          ).start()
-        self.mock_create_temp_cm = \
-          patch(
+        ).start()
+        self.mock_create_temp_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
-          ).start()
-        self.mock_rename_cm = \
-          patch(
+        ).start()
+        self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
-          ).start()
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.return_value = Mock(data="")
