@@ -23,6 +23,7 @@
 File defines few constants
 """
 
+import os
 from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR
 from re import compile
 
@@ -30,7 +31,8 @@ from re import compile
 CONFIG_MAP_TEMP = "cray-product-catalog-temp"
 
 # namespace for ConfigMaps
-CONFIG_MAP_NAMESPACE = "service"
+PRODUCT_CATALOG_CONFIG_MAP_NAME = os.environ.get("CONFIG_MAP_NAME", "cray-product-catalog").strip()
+PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE = os.environ.get("CONFIG_MAP_NAMESPACE", "services").strip()
 
 # config map names
 CRAY_DATA_CATALOG_LABEL = PRODUCT_CATALOG_CONFIG_MAP_LABEL_STR

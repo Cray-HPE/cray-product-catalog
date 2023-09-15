@@ -33,7 +33,7 @@ from re import fullmatch
 
 from cray_product_catalog.migration import CONFIG_MAP_TEMP, CRAY_DATA_CATALOG_LABEL, \
     PRODUCT_CONFIG_MAP_PATTERN
-from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
+from cray_product_catalog.migration import PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
 from cray_product_catalog.migration.kube_apis import KubernetesApi
 
 LOGGER = logging.getLogger(__name__)

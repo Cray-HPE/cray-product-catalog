@@ -36,11 +36,10 @@ from kubernetes.client.rest import ApiException
 from cray_product_catalog.logging import configure_logging
 from cray_product_catalog.util.catalog_data_helper import split_catalog_data, format_product_cm_name
 from cray_product_catalog.migration.kube_apis import KubernetesApi
-from cray_product_catalog.constants import (
-        PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-        PRODUCT_CATALOG_CONFIG_MAP_LABEL
-    )
-from cray_product_catalog.migration import CONFIG_MAP_TEMP, action
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL
+from cray_product_catalog.migration import (
+    CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, action
+)
 
 LOGGER = logging.getLogger(__name__)
 

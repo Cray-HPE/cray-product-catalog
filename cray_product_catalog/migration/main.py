@@ -25,12 +25,12 @@
 
 import logging
 
-from cray_product_catalog.migration import CONFIG_MAP_TEMP
+from cray_product_catalog.constants import PRODUCT_CATALOG_CONFIG_MAP_LABEL
 from cray_product_catalog.migration.config_map_data_handler import ConfigMapDataHandler
-from cray_product_catalog.constants import (
+from cray_product_catalog.migration import (
     PRODUCT_CATALOG_CONFIG_MAP_NAME,
     PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-    PRODUCT_CATALOG_CONFIG_MAP_LABEL
+    CONFIG_MAP_TEMP
 )
 from cray_product_catalog.migration.exit_handler import ExitHandler
 
