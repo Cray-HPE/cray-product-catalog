@@ -431,7 +431,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
             main()
 
             self.assertEqual(
-                        captured.records[-1].getMessage(),
+                        captured.records[-2].getMessage(),
                         f"Migration successful")
 
     def test_main_failed_1(self):
