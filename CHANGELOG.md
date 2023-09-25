@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   times when read ConfigMap fails for a product ConfigMap.
 - CASM-4504: Added label "type=cray-product-catalog" to all cray-product-catalog related ConfigMaps
 - Implemented migration of cray-product-catalog ConfigMap to multiple ConfigMaps as part of pre-upgrade steps
+- Created Helm Chart for splitting the cm
 
 ### Dependencies
 
