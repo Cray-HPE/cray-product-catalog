@@ -57,7 +57,7 @@ chart_package:
 		helm dep up ${CHART_PATH}/${NAME}
 		helm package ${CHART_PATH}/${NAME} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
 		helm dep up ${CHART_PATH}/${NAME1}
-                helm package ${CHART_PATH}/${NAME1} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
+		helm package ${CHART_PATH}/${NAME1} -d ${CHART_PATH}/.packaged --app-version ${DOCKER_VERSION} --version ${CHART_VERSION}
 
 chart_test:
 		helm lint "${CHART_PATH}/${NAME}"
