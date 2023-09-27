@@ -30,7 +30,7 @@ from cray_product_catalog.migration.config_map_data_handler import ConfigMapData
 from cray_product_catalog.migration import (
     PRODUCT_CATALOG_CONFIG_MAP_NAME,
     PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
-    CONFIG_MAP_TEMP
+    CONFIG_MAP_TEMP, RESOURCE_VERSION
 )
 from cray_product_catalog.migration.exit_handler import ExitHandler
 
@@ -42,47 +42,79 @@ def main():
     LOGGER.info("Migrating %s ConfigMap data to multiple product ConfigMaps", PRODUCT_CATALOG_CONFIG_MAP_NAME)
     config_map_obj = ConfigMapDataHandler()
     exit_handler = ExitHandler()
-    LOGGER.info("Revoking update permission from %s/%s",
-                PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, PRODUCT_CATALOG_CONFIG_MAP_NAME)
+    attempt = 0
+    max_attempts = 2
 
-    if not config_map_obj.k8s_obj.update_role_permission(
-        PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE, 'update', False
-    ):
-        LOGGER.error("Failed to revoke update permission, exiting migration process...")
-        raise SystemExit(1)
+    while (attempt < max_attempts):
+        attempt += 1
+        migration_failed = False
+        init_resource_version = ''
+        curr_resource_version = ''
+        response = config_map_obj.k8s_obj.read_config_map(
+            PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
+            )
+        if response:
+            if not response.metadata.resource_version:
+                LOGGER.error("Error reading resourceVersion, exiting migration process...")
+            else:
+                init_resource_version = response.metadata.resource_version
+            if not response.data:
+                LOGGER.error("Error reading ConfigMap data, exiting migration process...")
+            else:
+                config_map_data = response.data
+        else:
+            LOGGER.info("Error reading ConfigMap, exiting migration process...")
+            raise SystemExit(1)
 
-    response = config_map_obj.k8s_obj.read_config_map(
-        PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
-        )
-    if response and response.data:
-        config_map_data = response.data
-    else:
-        LOGGER.info("Error reading ConfigMap, exiting migration process...")
-        config_map_obj.grant_update_permission()
-        raise SystemExit(1)
+        try:
+            main_config_map_data, product_config_map_data_list = config_map_obj.migrate_config_map_data(config_map_data)
+        except Exception:
+            LOGGER.error("Failed to split ConfigMap Data, exiting migration process...")
+            raise SystemExit(1)
 
-    try:
-        main_config_map_data, product_config_map_data_list = config_map_obj.migrate_config_map_data(config_map_data)
-    except Exception:
-        LOGGER.error("Failed to split ConfigMap Data, exiting migration process...")
-        config_map_obj.grant_update_permission()
-        raise SystemExit(1)
+        # Create ConfigMaps for each product with `component_versions` data
+        if not config_map_obj.create_product_config_maps(product_config_map_data_list):
+            LOGGER.info("Calling rollback handler...")
+            exit_handler.rollback()
+            raise SystemExit(1)
+        # Create temporary main ConfigMap with all data except `component_versions` for all products
+        if not config_map_obj.create_temp_config_map(main_config_map_data):
+            LOGGER.info("Calling rollback handler...")
+            exit_handler.rollback()
+            raise SystemExit(1)
 
-    # Create ConfigMaps for each product with `component_versions` data
-    if not config_map_obj.create_product_config_maps(product_config_map_data_list):
-        LOGGER.info("Calling rollback handler...")
-        exit_handler.rollback()
-        config_map_obj.grant_update_permission()
-        raise SystemExit(1)
-    # Create temporary main ConfigMap with all data except `component_versions` for all products
-    if not config_map_obj.create_temp_config_map(main_config_map_data):
-        LOGGER.info("Calling rollback handler...")
-        exit_handler.rollback()
-        config_map_obj.grant_update_permission()
+        LOGGER.info("Verifying resource_version value is same to confirm there is no change in %s",
+                    PRODUCT_CATALOG_CONFIG_MAP_NAME)
+
+        response = config_map_obj.k8s_obj.read_config_map(
+            PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE
+            )
+        if response:
+            if not response.metadata.resource_version:
+                LOGGER.error("Error reading resourceVersion, exiting migration process...")
+                exit_handler.rollback()
+                raise SystemExit(1)
+            else:
+                curr_resource_version = response.metadata.resource_version
+
+        if curr_resource_version != init_resource_version:
+            migration_failed = True
+            LOGGER.info("resource_version has changed, so cannot rename %s ConfigMap to %s ConfigMap",
+                        CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
+            LOGGER.info("Re-trying migration process...")
+            exit_handler.rollback()
+            continue
+        else:
+            break
+
+    if migration_failed:
+        LOGGER.info("ConfigMap %s is modified by other process, exiting migration process...",
+                    PRODUCT_CATALOG_CONFIG_MAP_NAME)
         raise SystemExit(1)
 
     LOGGER.info("Renaming %s ConfigMap name to %s ConfigMap",
                 CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
+
     # Creating main ConfigMap `cray-product-catalog` using the data in `cray-product-catalog-temp`
     if config_map_obj.rename_config_map(
         CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME,
@@ -93,9 +125,7 @@ def main():
         LOGGER.info("Renaming %s to %s ConfigMap failed, calling rollback handler...",
                     CONFIG_MAP_TEMP, PRODUCT_CATALOG_CONFIG_MAP_NAME)
         exit_handler.rollback()
-        config_map_obj.grant_update_permission()
         raise SystemExit(1)
-    config_map_obj.grant_update_permission()
 
 
 if __name__ == "__main__":

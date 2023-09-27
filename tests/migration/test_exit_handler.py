@@ -42,7 +42,7 @@ class TestExitHandler(unittest.TestCase):
         self.mock_k8api_del = patch(
             'cray_product_catalog.migration.exit_handler.KubernetesApi.delete_config_map').start()
         self.mock_k8api_list = patch(
-            'cray_product_catalog.migration.exit_handler.KubernetesApi.list_config_map').start()
+            'cray_product_catalog.migration.exit_handler.KubernetesApi.list_config_map_names').start()
 
     def tearDown(self) -> None:
         patch.stopall()
@@ -71,26 +71,11 @@ class TestExitHandler(unittest.TestCase):
         for invalid_pattern in invalid_patterns:
             self.assertFalse(_is_product_config_map(invalid_pattern))
 
-    def test_rollback_failure_from_temp_config_map_deletion(self):
-        """Validating the scenario where temp config map is not deleted"""
-
-        with self.assertLogs() as captured:
-            self.mock_k8api_del.return_value = False
-
-            dummy_products = ["cray-product-catalog-cos", "cray-product-catalog-sma"]
-            self.mock_k8api_list.return_value = dummy_products
-            eh = ExitHandler()
-            eh.rollback()
-            # Verify the exact log message from last return
-            self.assertEqual(captured.records[-1].getMessage(), f"Error in deleting ConfigMap {CONFIG_MAP_TEMP}. "
-                                                                f"Delete this manually along with these "
-                                                                f"{dummy_products}")
-
     def test_rollback_failure_from_product_config_map_deletion(self):
         """Validating the scenario where one of the product config map is not deleted"""
 
         with self.assertLogs() as captured:
-            self.mock_k8api_del.side_effect = [True, True, False]  # delete is called three times
+            self.mock_k8api_del.side_effect = [True, False]  # delete is called two times
 
             dummy_products = ["cray-product-catalog-cos", "cray-product-catalog-sma"]
             self.mock_k8api_list.return_value = dummy_products
@@ -115,9 +100,6 @@ class TestExitHandler(unittest.TestCase):
 
             # three calls in sequence for complete flow
             self.mock_k8api_del.assert_has_calls(calls=[
-                call(
-                    name=CONFIG_MAP_TEMP,
-                    namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),
                 call(
                     name=dummy_products[0],
                     namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE),

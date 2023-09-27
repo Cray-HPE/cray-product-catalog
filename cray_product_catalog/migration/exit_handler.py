@@ -68,7 +68,7 @@ class ExitHandler:
     def __get_all_created_product_config_maps(self) -> List:
         """Get all created product config maps"""
         cm_name = filter(_is_product_config_map,
-                         self.k8api.list_config_map(
+                         self.k8api.list_config_map_names(
                              label=CRAY_DATA_CATALOG_LABEL,
                              namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE)
                          )
@@ -81,12 +81,6 @@ class ExitHandler:
         """
         LOGGER.warning("Initiating rollback")
         product_config_maps = self.__get_all_created_product_config_maps()  # collecting product config map
-
-        LOGGER.info("deleting ConfigMap %s", CONFIG_MAP_TEMP)  # attempting to delete temp config map
-        if not self.k8api.delete_config_map(name=CONFIG_MAP_TEMP, namespace=PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE):
-            LOGGER.error("Error in deleting ConfigMap %s. Delete this manually along with these %s",
-                         CONFIG_MAP_TEMP, product_config_maps)
-            return
 
         LOGGER.info("deleting Product ConfigMaps")  # attempting to delete product config maps
         non_deleted_product_config_maps = []

@@ -107,3 +107,24 @@ PROD_CM_DATA_LIST_EXPECTED = [
       key: Analytics/Cray-Analytics.x86_64-1.4.20.squashfs\n"""
     }
 ]
+
+
+class MockYaml:
+    """Mock class created to test test_create_product_catalog_invalid_product_data."""
+
+    def __init__(self, resource_version):
+        """Initialize metadata and data object of ConfigMap data."""
+        self.metadata = MetaData(resource_version)
+        self.data = {
+            'sat': '\t',
+        }
+
+
+class MetaData:
+    """
+    Class to provide dummy metadata object with name and resource_version
+    """
+    def __init__(self, resource_version):
+        """Initialize ConfigMap name and resoource_version"""
+        self.name = 'cray-product-catalog'
+        self.resource_version = resource_version

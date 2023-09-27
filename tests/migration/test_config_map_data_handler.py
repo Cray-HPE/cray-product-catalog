@@ -36,18 +36,14 @@ from kubernetes.client.api_client import ApiClient
 
 from cray_product_catalog.migration.main import main
 from cray_product_catalog.migration.config_map_data_handler import ConfigMapDataHandler
-from cray_product_catalog.migration.kube_apis import KubernetesApi
 from cray_product_catalog.constants import (
     PRODUCT_CATALOG_CONFIG_MAP_NAME, PRODUCT_CATALOG_CONFIG_MAP_NAMESPACE,
     PRODUCT_CATALOG_CONFIG_MAP_LABEL
 )
 from cray_product_catalog.util.catalog_data_helper import format_product_cm_name
-from tests.mock_update_catalog import (
-    ApiInstance, ApiException
-)
 from cray_product_catalog.migration import CONFIG_MAP_TEMP
 from tests.migration.migration_mock import (
-  MAIN_CM_DATA_EXPECTED, PROD_CM_DATA_LIST_EXPECTED, INITIAL_MAIN_CM_DATA
+    MAIN_CM_DATA_EXPECTED, PROD_CM_DATA_LIST_EXPECTED, INITIAL_MAIN_CM_DATA, MockYaml
 )
 
 
@@ -431,7 +427,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
             main()
 
             self.assertEqual(
-                        captured.records[-2].getMessage(),
+                        captured.records[-1].getMessage(),
                         f"Migration successful")
 
     def test_main_failed_1(self):
@@ -592,3 +588,90 @@ class TestConfigMapDataHandler(unittest.TestCase):
             self.mock_create_prod_cms.assert_not_called()
             self.mock_create_temp_cm.assert_not_called()
             self.mock_rename_cm.assert_not_called()
+
+    def test_main_failed_7(self):
+        """Validating that migration failed as initial and final resource version is different"""
+
+        self.mock_migrate_config_map = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+        ).start()
+        self.mock_create_prod_cms = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+        ).start()
+        self.mock_create_temp_cm = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+        ).start()
+        self.mock_rename_cm = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+        ).start()
+
+        with self.assertRaises(SystemExit) as captured:
+            self.mock_k8api_read.side_effect = [MockYaml(1), 
+                                                MockYaml(2),
+                                                MockYaml(1),
+                                                MockYaml(2)]
+            self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+            self.mock_create_prod_cms.return_value = True
+            self.mock_create_temp_cm.return_value = True
+
+            # Call method under test
+            main()
+
+            self.assertTrue(
+              "Re-trying migration process..." in captured.exception
+            )
+
+            self.assertTrue(
+              "rollback successful" in captured.exception
+            )
+
+            self.assertTrue(
+                f"ConfigMap {PRODUCT_CATALOG_CONFIG_MAP_NAME} is modified, exiting migration process..."
+            )
+            self.mock_rename_cm.assert_not_called()
+
+    def test_main_failed_8(self):
+        """Validating that migration is successful in second attempt as initial and final resource 
+           version is different in first attempt"""
+
+        self.mock_migrate_config_map = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.migrate_config_map_data'
+        ).start()
+        self.mock_create_prod_cms = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_product_config_maps'
+        ).start()
+        self.mock_create_temp_cm = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.create_temp_config_map'
+        ).start()
+        self.mock_rename_cm = patch(
+            'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
+        ).start()
+
+        with self.assertLogs(level="DEBUG") as captured:
+            # with self.assertRaises(SystemExit) as captured:
+            self.mock_k8api_read.side_effect = [MockYaml(1), 
+                                                MockYaml(2),
+                                                MockYaml(1),
+                                                MockYaml(1)]
+            self.mock_migrate_config_map.return_value = mock_split_catalog_data()
+            self.mock_create_prod_cms.return_value = True
+            self.mock_create_temp_cm.return_value = True
+            self.mock_rename_cm.return_value = True
+
+            # Call method under test
+            main()
+            # Verify the exact log message
+            self.assertEqual(10, len(captured.records))
+            self.assertEqual(
+                captured.records[3].getMessage(),
+                "Re-trying migration process..."
+            )
+            self.assertEqual(
+                captured.records[6].getMessage(),
+                "rollback successful"
+            )
+
+            self.assertEqual(
+                captured.records[-1].getMessage(),
+                "Migration successful"
+            )
