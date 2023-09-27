@@ -175,7 +175,6 @@ class KubernetesApi:
         :param bool is_grant: To add or remove, if True will add, if False will remove
         :return: bool; If success True else False
         """
-        return True
         if action not in ('get', 'create', 'update', 'patch', 'delete', 'proxy'):
             return False
         # body =
