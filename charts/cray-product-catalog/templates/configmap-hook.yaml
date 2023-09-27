@@ -1,7 +1,7 @@
 {{/*
 MIT License
 
-(C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+(C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cray-product-catalog-restore
+  name: cray-product-catalog-init
   namespace: services
   annotations:
-    "helm.sh/hook": post-upgrade,post-rollback
+    "helm.sh/hook": pre-install
 spec:
   template:
     metadata:
@@ -43,34 +43,6 @@ spec:
         command: ["/bin/sh"]
         args:
           - "-c"
-          - "kubectl get cm -n services cpc-backup -o yaml |
-              yq eval '.metadata.name = \"cray-product-catalog\"' - |
-              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f - && kubectl delete cm -n services cpc-backup"
-
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: cray-product-catalog-backup
-  namespace: services
-  annotations:
-    "helm.sh/hook": pre-upgrade,pre-rollback
-spec:
-  template:
-    metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"
-    spec:
-      serviceAccountName: cray-product-catalog
-      restartPolicy: Never
-      containers:
-      - name: create-catalog-configmap
-        image: "{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}"
-        command: ["/bin/sh"]
-        args:
-          - "-c"
-          - "kubectl get cm -n services cray-product-catalog -o yaml |
-              yq eval '.metadata.name = \"cpc-backup\"' - |
-              yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f -"
+          - "kubectl create cm -n services cray-product-catalog || kubectl get cm -n services cray-product-catalog;
+             kubectl label configmap cray-product-catalog type=cray-product-catalog -n services ||
+             kubectl get cm -n services cray-product-catalog"
