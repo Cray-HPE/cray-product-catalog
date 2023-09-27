@@ -606,7 +606,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
         ).start()
 
         with self.assertRaises(SystemExit) as captured:
-            self.mock_k8api_read.side_effect = [MockYaml(1), 
+            self.mock_k8api_read.side_effect = [MockYaml(1),
                                                 MockYaml(2),
                                                 MockYaml(1),
                                                 MockYaml(2)]
@@ -631,7 +631,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
             self.mock_rename_cm.assert_not_called()
 
     def test_main_failed_8(self):
-        """Validating that migration is successful in second attempt as initial and final resource 
+        """Validating that migration is successful in second attempt as initial and final resource
            version is different in first attempt"""
 
         self.mock_migrate_config_map = patch(
@@ -649,7 +649,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
 
         with self.assertLogs(level="DEBUG") as captured:
             # with self.assertRaises(SystemExit) as captured:
-            self.mock_k8api_read.side_effect = [MockYaml(1), 
+            self.mock_k8api_read.side_effect = [MockYaml(1),
                                                 MockYaml(2),
                                                 MockYaml(1),
                                                 MockYaml(1)]
