@@ -164,6 +164,7 @@ class TestModifyConfigMapUtil(unittest.TestCase):
 
                     # Verify the exact log message
                     self.assertEqual(captured.records[-1].getMessage(),
-                        f"Product {self.modify_config_map_util.product_name} "
-                        f"doesn't have respective product ConfigMap "
-                        f"{self.modify_config_map_util.cm_namespace}/{self.modify_config_map_util.product_cm}")
+                                     f"Product {self.modify_config_map_util.product_name} "
+                                     f"doesn't have respective product ConfigMap "
+                                     f"{self.modify_config_map_util.cm_namespace}/"
+                                     f"{self.modify_config_map_util.product_cm}")
