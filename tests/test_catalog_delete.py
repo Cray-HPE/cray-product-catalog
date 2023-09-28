@@ -26,13 +26,17 @@ Deleting keys/Product or a specific version of a product from ConfigMap
 import unittest
 from unittest.mock import patch, call
 
-from cray_product_catalog.catalog_delete import ModifyConfigMapUtil
+from cray_product_catalog.catalog_delete import ModifyConfigMapUtil, modify_config_map
+from tests.mock_update_catalog import ApiInstance
 
 
 class TestModifyConfigMapUtil(unittest.TestCase):
     """unittest class for Data catalog ConfigMap deletion logic"""
 
     def setUp(self) -> None:
+        self.mock_load_k8s = patch('cray_product_catalog.catalog_delete.load_k8s').start()
+        self.mock_ApiClient = patch('cray_product_catalog.catalog_delete.ApiClient').start()
+        self.mock_client = patch('cray_product_catalog.catalog_delete.client').start()
         self.mock_modify_config_map = patch('cray_product_catalog.catalog_delete.modify_config_map').start()
 
         self.modify_config_map_util = ModifyConfigMapUtil()
@@ -139,3 +143,28 @@ class TestModifyConfigMapUtil(unittest.TestCase):
         self.modify_config_map_util.key = 909  # non string is invalid as well
         self.modify_config_map_util.modify()
         self.mock_modify_config_map.assert_not_called()
+
+    def test_delete_from_main_cm_but_not_prod_cm(self):
+        """Test cases to assert delete calls into main ConfigMap but not from product configMap"""
+        with patch('cray_product_catalog.catalog_delete.client.CoreV1Api', ApiInstance):
+            with self.assertLogs() as captured:
+                with patch(
+                    'cray_product_catalog.catalog_delete.random.randint', return_value=0
+                ):
+                    self.modify_config_map_util.max_retries_for_prod_cm = 1
+                    # call method under test
+                    modify_config_map(
+                        self.modify_config_map_util.product_cm,
+                        self.modify_config_map_util.cm_namespace,
+                        self.modify_config_map_util.product_name,
+                        self.modify_config_map_util.product_version,
+                        self.modify_config_map_util.key,
+                        self.modify_config_map_util.max_retries_for_prod_cm
+                    )
+
+                    # Verify the exact log message
+                    self.assertEqual(captured.records[-1].getMessage(),
+                                     f"Product {self.modify_config_map_util.product_name} "
+                                     f"doesn't have respective product ConfigMap "
+                                     f"{self.modify_config_map_util.cm_namespace}/"
+                                     f"{self.modify_config_map_util.product_cm}")
