@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   times when read ConfigMap fails for a product ConfigMap.
 - CASM-4504: Added label "type=cray-product-catalog" to all cray-product-catalog related ConfigMaps
 - Implemented migration of cray-product-catalog ConfigMap to multiple ConfigMaps as part of pre-upgrade steps
-- Changed how the `cray-product-catalog` configmap is created so that it's not a template, it's created by a job
+- Changed how the `cray-product-catalog` ConfigMap is created. Going forward it will be 
+  created using kubectl command as part of job instead of template.
 
 ### Dependencies
 
