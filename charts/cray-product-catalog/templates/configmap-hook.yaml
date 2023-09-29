@@ -45,4 +45,5 @@ spec:
           - "-c"
           - "kubectl create cm -n services cray-product-catalog || kubectl get cm -n services cray-product-catalog;
              kubectl label configmap cray-product-catalog type=cray-product-catalog -n services ||
-             kubectl get cm -n services cray-product-catalog"
+             kubectl get cm -n services cray-product-catalog;
+             kubectl create sa -n services cray-product-catalog || kubectl get sa -n services cray-product-catalog"
