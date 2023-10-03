@@ -54,7 +54,7 @@ spec:
             runAsUser: 0
           image: {{ .Values.job.image }}
           imagePullPolicy: IfNotPresent
-          name: update-catalog
+          name: migrate-catalog
       restartPolicy: Never
       serviceAccount: {{ .Values.job.serviceAccount }}
       serviceAccountName: {{ .Values.job.serviceAccount }}
