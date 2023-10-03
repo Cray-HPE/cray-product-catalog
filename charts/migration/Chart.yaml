@@ -24,7 +24,7 @@
 apiVersion: v2
 name: cpc-migration
 version: 0.0.0-chart  # Replaced during build
-description: Helm Chart for splitting the main cm
+description: Helm Chart for splitting the 'cray-product-catlog' configMap
 keywords:
   - cray
   - shasta
