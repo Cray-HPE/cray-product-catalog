@@ -46,4 +46,9 @@ spec:
           - "kubectl create cm -n services cray-product-catalog || kubectl get cm -n services cray-product-catalog;
              kubectl label configmap cray-product-catalog type=cray-product-catalog -n services ||
              kubectl get cm -n services cray-product-catalog;
-             kubectl create sa -n services cray-product-catalog || kubectl get sa -n services cray-product-catalog"
+             kubectl create sa -n services cray-product-catalog || kubectl get sa -n services cray-product-catalog;
+             kubectl create role -n services cray-product-catalog --verb=create,get,list,update,patch,delete
+             --resource=configmaps || kubectl get role -n services cray-product-catalog;
+             kubectl create rolebinding -n services cray-product-catalog --role=cray-product-catalog
+             --serviceaccount=services:cray-product-catalog ||
+             kubectl get rolebinding -n services cray-product-catalog"
