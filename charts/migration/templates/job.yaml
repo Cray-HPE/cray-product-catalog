@@ -38,7 +38,7 @@ spec:
           - -c
           - /usr/bin/catalog_migrate
           command:
-          - /bin/ash
+          - /bin/sh
           env:
           - name: PRODUCT
             value: {{ .Values.job.product }}
