@@ -43,10 +43,11 @@ spec:
         command: ["/bin/sh"]
         args:
           - "-c"
-          - "kubectl get cm -n services cpc-backup -o yaml |
+          - "kubectl delete cm -n services cray-product-catalog &&
+              kubectl get cm -n services cpc-backup -o yaml |
               yq eval '.metadata.name = \"cray-product-catalog\"' - |
               yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f - && kubectl delete cm -n services cpc-backup"
+              kubectl create -f - && kubectl delete cm -n services cpc-backup"
 
 ---
 apiVersion: batch/v1
@@ -73,4 +74,4 @@ spec:
           - "kubectl get cm -n services cray-product-catalog -o yaml |
               yq eval '.metadata.name = \"cpc-backup\"' - |
               yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
-              kubectl apply -f -"
+              kubectl create -f -"
