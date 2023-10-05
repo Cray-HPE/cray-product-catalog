@@ -57,6 +57,7 @@ metadata:
   namespace: services
   annotations:
     "helm.sh/hook": pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "2"
 spec:
   template:
     metadata:
@@ -75,3 +76,35 @@ spec:
               yq eval '.metadata.name = \"cpc-backup\"' - |
               yq eval 'del(.metadata.resourceVersion, .metadata.uid, .metadata.annotations, .metadata.creationTimestamp, .metadata.selfLink, .metadata.managedFields)' - |
               kubectl create -f -"
+
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-my-job
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "1"
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - args:
+          - -c
+          - /usr/bin/catalog_migrate
+          command:
+          - /bin/sh
+          env:
+          - name: CONFIG_MAP
+            value: {{ .Values.migration.configMap }}
+          - name: CONFIG_MAP_NAMESPACE
+            value: {{ .Values.migration.configMapNamespace }}
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          name: migrate-catalog
+      restartPolicy: Never
+      serviceAccount: {{ .Values.migration.serviceAccount }}
+      serviceAccountName: {{ .Values.migration.serviceAccount }}
+
