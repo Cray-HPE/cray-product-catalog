@@ -27,8 +27,8 @@ kubectl:
     tag: 1.19.15
 migration:
   image:
-    repository: artifactory.algol60.net/csm-docker/unstable/cray-product-catalog-update 
-    tag: 1.10.0-CASMTRIAGE-5912.105_ceb483f
+    repository: artifactory.algol60.net/csm-docker/unstable/$APP_NAME 
+    tag: $DOCKER_VERSION
   configMap: cray-product-catalog
   configMapNamespace: services
   serviceAccount: cray-product-catalog
