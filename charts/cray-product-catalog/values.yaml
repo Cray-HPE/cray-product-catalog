@@ -27,9 +27,15 @@ kubectl:
     tag: 1.19.15
 migration:
   image:
-    repository: artifactory.algol60.net/csm-docker/unstable/$APP_NAME 
+    repository: artifactory.algol60.net/csm-docker/unstable/cray-product-catalog-update 
     tag: $DOCKER_VERSION
   configMap: cray-product-catalog
   configMapNamespace: services
   serviceAccount: cray-product-catalog
 
+
+global:
+  appVersion: 1.10.0-add-rollback-pending.106_d9b8b23
+
+global:
+  appVersion: 1.10.0-add-rollback-pending.106_d9b8b23

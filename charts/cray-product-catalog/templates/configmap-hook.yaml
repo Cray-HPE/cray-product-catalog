@@ -101,7 +101,7 @@ spec:
             value: {{ .Values.migration.configMap }}
           - name: CONFIG_MAP_NAMESPACE
             value: {{ .Values.migration.configMapNamespace }}
-          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.global.appVersion }}"
           imagePullPolicy: IfNotPresent
           name: migrate-catalog
       restartPolicy: Never
