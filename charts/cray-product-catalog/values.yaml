@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -25,3 +25,17 @@ kubectl:
   image:
     repository: artifactory.algol60.net/csm-docker/stable/docker-kubectl
     tag: 1.19.15
+migration:
+  image:
+    repository: artifactory.algol60.net/csm-docker/unstable/cray-product-catalog-update 
+    tag: $DOCKER_VERSION
+  configMap: cray-product-catalog
+  configMapNamespace: services
+  serviceAccount: cray-product-catalog
+
+
+global:
+  appVersion: 1.10.0-add-rollback-pending.106_d9b8b23
+
+global:
+  appVersion: 1.10.0-add-rollback-pending.106_d9b8b23
