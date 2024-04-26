@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Hewlett Packard Enterprise Development LP
+# Copyright 2020-2021, 2024 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@ RUN apk add --upgrade --no-cache apk-tools \
         python3-dev \
         libc-dev \
     && apk -U upgrade --no-cache \
-    && pip3 install --no-cache-dir -r requirements.txt \
+    && pip3 install --ignore-installed --no-cache-dir -r requirements.txt \
     && python3 setup.py install \
     && rm -rf /src/
 
