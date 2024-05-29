@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2024-05-29
+
+### Changed
+- CASMCMS-9012: Modify build process to remove dependencies on additional files from `setup.py`. This should allow installs from the
+  Python module source files to work.
+
 ## [2.1.0] - 2024-03-20
 
 ### Changed
