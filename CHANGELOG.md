@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2024-05-29
+
+### Changed
+- CASMCMS-9012: Modify build process to remove dependencies on additional files from `setup.py`. This should allow installs from the
+  Python module source files to work.
+
 ## [1.9.0] - 2023-08-16
 
 ### Changed
@@ -429,7 +435,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.9.1...HEAD
+
+[1.9.1]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.9.0...v1.9.1
 
 [1.9.0]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.12...v1.9.0
 
