@@ -29,24 +29,11 @@ from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, '.version'), encoding='utf-8') as f:
-    version = f.read().strip()
-
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
-    install_requires = []
-    for line in f.readlines():
-        if line and line[0].isalpha():
-            install_requires.append(line.strip())
-
+# The version is set at build time
 setup(
     name='cray-product-catalog',
-    version=version,
+    version= "@RPM_VERSION@",
     description='Cray Product Catalog',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
     url='https://github.com/Cray-HPE/cray-product-catalog',
     author='Hewlett Packard Enterprise Development LP',
     license='MIT',
@@ -54,9 +41,7 @@ setup(
     package_data={
         'cray_product_catalog.schema': ['schema.yaml']
     },
-    python_requires='>=3, <4',
-    # Top-level dependencies are parsed from requirements.txt
-    install_requires=install_requires,
+    python_requires='>=3.9, <4',
     entry_points={
         'console_scripts': [
             'catalog_delete=cray_product_catalog.catalog_delete:main',

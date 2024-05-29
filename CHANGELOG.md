@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Modify build process to remove dependencies on additional files from `setup.py`. This should allow installs from the
+  Python module source files to work.
+
 ### Dependencies
 - Bump `tj-actions/changed-files` from 43 to 44 ([#320](https://github.com/Cray-HPE/cray-product-catalog/pull/320))
 

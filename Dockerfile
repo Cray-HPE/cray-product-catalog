@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2020-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2020-2024 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,12 +23,10 @@
 #
 FROM artifactory.algol60.net/csm-docker/stable/docker.io/library/alpine:3.15 as base
 RUN apk add --no-cache py3-pip python3
-ARG PYMOD_VERSION=0.0.0
 
 WORKDIR /src/
 COPY cray_product_catalog/ ./cray_product_catalog
 COPY setup.py requirements.txt constraints.txt README.md ./
-RUN echo ${PYMOD_VERSION} > .version
 
 RUN apk add --upgrade --no-cache apk-tools \
     && apk update \
