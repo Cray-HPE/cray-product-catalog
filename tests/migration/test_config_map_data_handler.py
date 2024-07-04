@@ -599,6 +599,9 @@ class TestConfigMapDataHandler(unittest.TestCase):
         self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
         ).start()
+        self.mock_is_migrated = patch(
+            'cray_product_catalog.migration.main.is_migrated'
+        ).start()
 
         with self.assertRaises(SystemExit) as captured:
             self.mock_k8api_read.side_effect = [MockYaml(1),
@@ -608,6 +611,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
             self.mock_migrate_config_map.return_value = mock_split_catalog_data()
             self.mock_create_prod_cms.return_value = True
             self.mock_create_temp_cm.return_value = True
+            self.mock_is_migrated.return_value = False
 
             # Call method under test
             main()
@@ -641,6 +645,9 @@ class TestConfigMapDataHandler(unittest.TestCase):
         self.mock_rename_cm = patch(
             'cray_product_catalog.migration.config_map_data_handler.ConfigMapDataHandler.rename_config_map'
         ).start()
+        self.mock_is_migrated = patch(
+            'cray_product_catalog.migration.main.is_migrated'
+        ).start()
 
         with self.assertLogs(level="DEBUG") as captured:
             # with self.assertRaises(SystemExit) as captured:
@@ -652,6 +659,7 @@ class TestConfigMapDataHandler(unittest.TestCase):
             self.mock_create_prod_cms.return_value = True
             self.mock_create_temp_cm.return_value = True
             self.mock_rename_cm.return_value = True
+            self.mock_is_migrated.return_value = False
 
             # Call method under test
             main()
