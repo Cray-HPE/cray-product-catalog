@@ -219,7 +219,23 @@ class ModifyConfigMapUtil:
             return
 
         self.__modify_main_cm()
-        self.__modify_product_cm()
+        k8sclient = ApiClient()
+        name = self.__product_cm
+        namespace = self.__cm_namespace
+        product_name = self.__product_name
+        api_instance = client.CoreV1Api(k8sclient)
+        try:
+            response = api_instance.read_namespaced_config_map(name, namespace)
+            self.__modify_product_cm()
+        except ApiException as err:
+            if err.status == ERR_NOT_FOUND:
+                LOGGER.warning("ConfigMap %s/%s not found for %s", namespace, name, product_name)
+            else:
+                LOGGER.exception("Unexpected error %s calling read_namespaced_config_map", err.status)
+                raise
+        except Exception as err:
+            LOGGER.exception("Exception %s calling read_namespaced_config_map", err)
+            raise
 
 
 def modify_config_map(name, namespace, product, product_version, key=None, max_attempts=MAX_RETRIES):

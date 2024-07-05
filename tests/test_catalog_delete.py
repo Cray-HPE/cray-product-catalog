@@ -24,7 +24,9 @@ File contains unit test classes for validating ConfigMap deletion logic.
 Deleting keys/product or a specific version of a product from ConfigMap
 """
 import unittest
+from unittest import mock
 from unittest.mock import patch, call
+from tests.mock_update_catalog import ApiInstance
 
 from cray_product_catalog.catalog_delete import ModifyConfigMapUtil
 
@@ -46,6 +48,15 @@ class TestModifyConfigMapUtil(unittest.TestCase):
         self.modify_config_map_util.key = "key"
         self.modify_config_map_util.main_cm_fields = ["main_a", "main_b", "main_c"]
         self.modify_config_map_util.product_cm_fields = ["prod_1", "prod_2", "prod_3"]
+        self.mock_ApiClient = mock.patch('cray_product_catalog.catalog_delete.ApiClient').start()
+        self.mock_client = mock.patch('cray_product_catalog.catalog_delete.client').start()
+        self.mock_api_instance = mock.patch(
+                'cray_product_catalog.catalog_delete.client.CoreV1Api', return_value=ApiInstance(raise_exception=False)
+        ).start()
+        self.mock_api_instance.return_value.count = 1
+        self.mock_read_config_map = mock.patch(
+            'cray_product_catalog.catalog_delete.client.CoreV1Api.read_namespaced_config_map'
+            ).start()
 
     def tearDown(self) -> None:
         patch.stopall()
