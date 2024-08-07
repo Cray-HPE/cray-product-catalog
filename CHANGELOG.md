@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `pyyaml` from 6.0.1 to 6.0.2 ([#329](https://github.com/Cray-HPE/cray-product-catalog/pull/329))
+
 ## [2.3.0] - 2024-07-16
 
 ### Changed
