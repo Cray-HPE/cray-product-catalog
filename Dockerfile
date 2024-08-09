@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2020-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2020-2024 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,7 @@ RUN apk add --upgrade --no-cache apk-tools \
     && pip3 install --no-cache-dir --upgrade pip wheel -c constraints.txt \
     && pip3 install --ignore-installed --no-cache-dir -r requirements.txt \
     && python3 setup.py install \
+    && pip3 list --format freeze \
     && rm -rf /src/
 
 # Must make catalog_update available as /catalog_update.py

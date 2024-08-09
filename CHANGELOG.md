@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- List installed Python packages in Dockerfile, for build logging purposes
+
 ### Dependencies
 - Bump `tj-actions/changed-files` from 43 to 44 ([#320](https://github.com/Cray-HPE/cray-product-catalog/pull/320))
 
