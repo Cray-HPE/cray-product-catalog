@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `tj-actions/changed-files` from 43 to 44 ([#320](https://github.com/Cray-HPE/cray-product-catalog/pull/320))
+- Pin major and minor versions of Python dependencies, but use latest patch version
 
 ## [2.1.0] - 2024-03-20
 
