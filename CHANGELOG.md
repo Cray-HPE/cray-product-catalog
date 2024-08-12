@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - List installed Python packages in Dockerfile, for build logging purposes
 - Pin major and minor versions of Python dependencies, but use latest patch version
 
+### Dependencies
+- Bump `pyrsistent` from <0.20,>=0.19.3 to >=0.19.3,<0.21 ([#343](https://github.com/Cray-HPE/cray-product-catalog/pull/343))
+
 ## [2.3.0] - 2024-07-16
 
 ### Changed
