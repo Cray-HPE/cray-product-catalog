@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - List installed Python packages in Dockerfile, for build logging purposes
 - Pin major and minor versions of Python dependencies, but use latest patch version
 
+### Dependencies
+- Bump `websocket-client` from <1.7,>=1.6.4 to >=1.6.4,<1.9 ([#332](https://github.com/Cray-HPE/cray-product-catalog/pull/332))
+
 ## [2.3.0] - 2024-07-16
 
 ### Changed
