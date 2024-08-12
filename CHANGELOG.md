@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - List installed Python packages in Dockerfile, for build logging purposes
 - Pin major and minor versions of Python dependencies, but use latest patch version
 
+### Dependencies
+- Bump `google-auth` from <2.23,>=2.22 to >=2.22,<2.34 ([#337](https://github.com/Cray-HPE/cray-product-catalog/pull/337))
+
 ## [2.3.0] - 2024-07-16
 
 ### Changed
