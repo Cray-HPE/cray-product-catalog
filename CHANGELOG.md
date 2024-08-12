@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - List installed Python packages in Dockerfile, for build logging purposes
 - Pin major and minor versions of Python dependencies, but use latest patch version
 
+### Dependencies
+- Bump `pyasn1` from <0.6,>=0.5.1 to >=0.5.1,<0.7 ([#331](https://github.com/Cray-HPE/cray-product-catalog/pull/331))
+
 ## [2.3.0] - 2024-07-16
 
 ### Changed
