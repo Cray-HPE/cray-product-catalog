@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.14] - 2024-08-15
+
+### Changed
+- CASMCMS-9098: Restore `install_requires` and `long_description` to Python module by creating [`MANIFEST.in`](MANIFEST.in)
+
 ## [1.8.13] - 2024-05-29
 
 ### Changed
@@ -423,7 +428,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.13...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.14...HEAD
+
+[1.8.14]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.13...v1.8.14
 
 [1.8.13]: https://github.com/Cray-HPE/cray-product-catalog/compare/v1.8.12...v1.8.13
 
