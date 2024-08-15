@@ -26,7 +26,7 @@ RUN apk add --no-cache py3-pip python3
 
 WORKDIR /src/
 COPY cray_product_catalog/ ./cray_product_catalog
-COPY setup.py requirements.txt constraints.txt README.md ./
+COPY setup.py requirements.txt constraints.txt README.md MANIFEST.in ./
 
 RUN apk add --upgrade --no-cache apk-tools \
     && apk update \
