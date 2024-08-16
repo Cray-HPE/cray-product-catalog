@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `wheel` from <0.41,>=0.40 to >=0.40,<0.45 ([#348](https://github.com/Cray-HPE/cray-product-catalog/pull/348))
+
 ## [2.3.1] - 2024-08-15
 
 ### Changed
