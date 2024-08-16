@@ -21,4 +21,4 @@ setuptools>=68.0,<68.1
 six>=1.16,<1.17
 urllib3>=1.26.19,<1.27
 websocket-client>=1.6.4,<1.7
-wheel>=0.40,<0.41
+wheel>=0.40,<0.45
