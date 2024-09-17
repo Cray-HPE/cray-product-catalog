@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `cachetools` from <5.4,>=5.3.3 to >=5.3.3,<5.6 ([#358](https://github.com/Cray-HPE/cray-product-catalog/pull/358))
+
 ## [2.4.0] - 2024-09-09
 
 ### Dependencies
