@@ -4,7 +4,7 @@ certifi==2023.5.7
 charset-normalizer>=3.2.0,<3.3
 google-auth>=2.22,<2.23
 idna>=3.4,<3.5
-jsonschema>=4.18.6,<4.19
+jsonschema>=4.18.6,<4.24
 # CSM 1.6 moved to Kubernetes 1.24, so use client v24.x to ensure compatability
 kubernetes>=24.2,<24.3
 oauthlib>=3.2.2,<3.3
