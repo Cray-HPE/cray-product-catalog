@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `setuptools` from <68.1,>=68.0 to >=68.0,<75.2 ([#354](https://github.com/Cray-HPE/cray-product-catalog/pull/354))
+
 ## [2.4.0] - 2024-09-09
 
 ### Dependencies
