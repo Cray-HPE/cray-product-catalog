@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `google-auth` from <2.23,>=2.22 to >=2.22,<2.35 ([#355](https://github.com/Cray-HPE/cray-product-catalog/pull/355))
+
 ## [2.4.0] - 2024-09-09
 
 ### Dependencies
