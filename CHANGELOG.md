@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `idna` from <3.5,>=3.4 to >=3.4,<3.11 ([#356](https://github.com/Cray-HPE/cray-product-catalog/pull/356))
+
 ## [2.4.0] - 2024-09-09
 
 ### Dependencies
