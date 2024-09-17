@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `pyasn1` from <0.6,>=0.5.1 to >=0.5.1,<0.7 ([#357](https://github.com/Cray-HPE/cray-product-catalog/pull/357))
+
 ## [2.4.0] - 2024-09-09
 
 ### Dependencies
