@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `kubernetes` from <24.3,>=24.2 to >=24.2,<31.1 ([#363](https://github.com/Cray-HPE/cray-product-catalog/pull/363))
+
 ## [2.4.1] - 2024-09-19
 
 ### Changed
