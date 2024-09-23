@@ -6,7 +6,7 @@ google-auth>=2.22,<2.23
 idna>=3.4,<3.5
 jsonschema>=4.18.6,<4.19
 # CSM 1.6 moved to Kubernetes 1.24, so use client v24.x to ensure compatability
-kubernetes>=24.2,<24.3
+kubernetes>=24.2,<31.1
 oauthlib>=3.2.2,<3.3
 pip>=23.2.1,<23.3
 pyasn1>=0.5.1,<0.6
