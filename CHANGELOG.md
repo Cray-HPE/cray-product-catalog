@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Bump `charset-normalizer` from <3.3,>=3.2.0 to >=3.2.0,<3.5 ([#364](https://github.com/Cray-HPE/cray-product-catalog/pull/364))
+
 ## [2.4.1] - 2024-09-19
 
 ### Changed
