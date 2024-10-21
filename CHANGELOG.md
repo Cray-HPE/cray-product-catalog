@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- CASMTRIAGE-7413: Remove all Python content and YAML schemas. This has been moved to the
+  `cray-product-catalog-core` repository.
+
+### Changed
+- CASMTRIAGE-7413: Instead of building the cray-product-catalog Python module in the [Dockerfile](Dockerfile),
+  instead install the module build from the `cray-product-catalog-core` repository.
+
 ## [2.4.1] - 2024-09-19
 
 ### Changed
