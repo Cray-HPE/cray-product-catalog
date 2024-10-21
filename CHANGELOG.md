@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CASMTRIAGE-7413: Instead of building the cray-product-catalog Python module in the [Dockerfile](Dockerfile),
   instead install the module build from the `cray-product-catalog-core` repository.
 
+### Dependencies
+- Bump version of `certifi` to resolve CVE.
+
 ## [2.4.1] - 2024-09-19
 
 ### Changed
