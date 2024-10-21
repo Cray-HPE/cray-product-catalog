@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2024 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -34,30 +34,6 @@ updates:
       - "github-actions-deps"
       - "dependabot"
     open-pull-requests-limit: 16
-
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    assignees:
-      - "Cray-HPE/CMS-core-product-support"
-    labels:
-      - "python-deps"
-      - "dependabot"
-    open-pull-requests-limit: 16
-    allow:
-      # Allow updates to both direct and indirect dependencies
-      - dependency-type: "all"
-    ignore:
-      # Currently there is a limitation we don't want dependabot to keep tripping over. Namely:
-      # kubernetes 26.1.0 depends on urllib3>=1.24.2
-      # google-auth 2.21.0 depends on urllib3<2.0
-      # So we cap urllib3 to be <2.0
-      - dependency-name: "urllib3"
-        versions: [ ">=2.0.0" ]
-      # Only look for patch version updates
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor" ]
 
   - package-ecosystem: "docker"
     directory: "/"
