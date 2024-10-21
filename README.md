@@ -1,8 +1,11 @@
 # Cray Product Catalog
 
-This repository contains the Docker image definition for the cray-product-catalog-update
-image. This image provides a script that uploads the contents of a yaml file to
-a product catalog entry, which serves as a kubernetes config map.
+This repository contains the Docker image definition for the cray-product-catalog-update image. This
+image provides a script that uploads the contents of a yaml file to a product catalog entry, which serves
+as a kubernetes config map. All of the Python source code and YAML schemas have been moved to the
+[`cray-product-catalog-core`](https://github.com/Cray-HPE/cray-product-catalog-core) repository.
+See the [`README` file](https://github.com/Cray-HPE/cray-product-catalog-core/blob/develop/README.md)
+in that repository for additional details about the product catalog.
 
 See the [CSM Compatibility Matrix](https://github.com/Cray-HPE/cray-product-catalog/wiki/CSM-Compatibility-Matrix)
 for more information about what version of the Cray Product Catalog Update image to
@@ -164,12 +167,6 @@ output is governed by the `GitVersion.yml` file in the root of this repo.
 Run `gitversion -output json` to see the current version based on the checked
 out commit.
 
-Create a release by triggering the [Draft New Release](https://github.com/Cray-HPE/cray-product-catalog/actions/workflows/draft-new-release.yml)
-workflow with the version that will be released.
-
-Releases are automatically published when pull requests to the master branch
-are merged.
-
 ## Contributing
 
 This repo uses [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)
@@ -181,8 +178,6 @@ CMS-core-product-support team members should make a branch. Others, make a fork.
 
 * Alpine Linux
 * Python 3
-* Python Requests
-* Kubernetes Python Client
 * Docker
 * [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/)
 * [Gitversion](https://gitversion.net)
@@ -194,6 +189,7 @@ See the [CHANGELOG](CHANGELOG.md) for changes. This file uses the [Keep A Change
 format.
 
 ## Copyright and License
+
 This project is copyrighted by Hewlett Packard Enterprise Development LP and is under the MIT
 license. See the [LICENSE](LICENSE) file for details.
 
