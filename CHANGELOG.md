@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2024-11-12
+
+### Dependencies
+- CASMCMS-9199: Use version 2.6 of product catalog Python package (no content differences).
+
 ## [2.5.0] - 2024-10-21
 
 ### Removed
@@ -527,7 +532,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.6.0...HEAD
+
+[2.6.0]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.5.0...v2.6.0
 
 [2.5.0]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.4.1...v2.5.0
 
