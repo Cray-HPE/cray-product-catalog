@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- Update `kubernetes` version to match CSM 1.7
+
 ## [2.7.0] - 2025-02-13
 
 ### Dependencies
