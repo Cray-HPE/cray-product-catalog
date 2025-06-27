@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Dependencies
-
 - Bump `dangoslen/dependabot-changelog-helper` from 3 to 4 ([#373](https://github.com/Cray-HPE/cray-product-catalog/pull/373))
+- Update `kubernetes` version to match CSM 1.7
 
 ## [2.7.0] - 2025-02-13
 
