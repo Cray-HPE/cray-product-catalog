@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Dependencies
+- CASMCMS-9508: Use 2.8 version of `cray-product-catalog` Python module
+
 ## [2.7.1] - 2025-07-02
 
 ### Dependencies
