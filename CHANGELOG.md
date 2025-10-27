@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.2] - 2025-10-27
+
 ### Dependencies
 - CASMCMS-9508: Use 2.8 version of `cray-product-catalog` Python module
 - Bump `actions/checkout` from 4 to 5 ([#377](https://github.com/Cray-HPE/cray-product-catalog/pull/377))
@@ -549,7 +551,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change default reviewers to CMS-core-product-support
 
-[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.7.2...HEAD
+
+[2.7.2]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.7.1...v2.7.2
+
+[2.7.1]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.7.0...v2.7.1
+
+[2.7.0]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.6.0...v2.7.0
 
 [2.6.0]: https://github.com/Cray-HPE/cray-product-catalog/compare/v2.5.0...v2.6.0
 
